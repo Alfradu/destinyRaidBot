@@ -1,0 +1,19 @@
+{
+  "name": "destiny-raid-help",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "all": "0.0.0",
+    "dependencies": "0.0.1",
+    "discord.js": "^12.2.0",
+    "lodash": "^4.17.19",
+    "sequelize": "^6.3.3"
+  }
+}
