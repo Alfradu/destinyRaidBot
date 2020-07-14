@@ -47,7 +47,7 @@ module.exports = {
 
         //raid time: 
         args[1]
-        exampleEmbed.fields[0].value = "1. "+message.author.username;
+        exampleEmbed.fields[0].value = "1. <@"+message.author.id+">";
         message.channel.send({ embed: exampleEmbed }).then(message => {
             message.react("✅");
         });
@@ -69,14 +69,14 @@ module.exports = {
         console.log('#############################');
         let index = 2;
         let confirmed = members.map((user) => {
-            return `${index++}. ${user.username}`;
+            return `${index++}. <@${user.id}>`;
         });
         for(;index < 7; index++) {
             confirmed.push(`${index}.`);
         }
         index = 1;
         let waiting = standin.map((user) => {
-            return `${index++}. ${user.username}`;
+            return `${index++}. <@${user.id}>`;
         });
         for(;index < 7; index++) {
             waiting.push(`${index}.`);
