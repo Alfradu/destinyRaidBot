@@ -1,6 +1,6 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
 const raids =  {
-    "vog" : "Vault of Glass", 
+    "vog" : "Vault of Glass",
     "gos" : "Garden of Salvation", 
     "sotp" : "Scourge of the Past", 
     "lw" : "Last Wish", 
