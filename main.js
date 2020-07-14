@@ -1,4 +1,5 @@
 const fs = require('fs');
+const utils = require('./utils.js');
 const Discord = require('discord.js');
 const { prefix, token, channel } = require('./config.json');
 const { promisify } = require('util');
@@ -22,10 +23,8 @@ client.on('ready', async() => {
             throw err;
         }
     });
-
     /** @type {Discord.TextChannel} */
     const ch = await client.channels.fetch(channel);
-
     fs.readdir('./_db', (err, files) => {
         if(err) {
             throw err;

@@ -1,39 +1,16 @@
 const fs = require('fs');
-const cloneDeep = require('lodash/fp/cloneDeep');
+const utils = require('../utils.js');
+const { forEach } = require('lodash');
 
-const raids =  {
-    "vog" : "Vault of Glass",
-    "gos" : "Garden of Salvation", 
-    "sotp" : "Scourge of the Past", 
-    "lw" : "Last Wish", 
-    "levi" : "Leviathan", 
-    "cos" : "Crown of Sorrow", 
-    "eow" : "Eater of Worlds", 
-    "sos" : "Spire of Stars"
-};
-
-const coreEmbed = {
-    color: 0x0099ff,
-    title: 'Raid',
-    description: 'Some description here',
-    thumbnail: {
-        url: 'attachment://raid.jpg',
-    },
-    fields: [
-        {
-            name: 'Members',
-            value: '1. \n2. \n3. \n4. \n5. \n6.',
-            inline: true,
-        },
-        {
-            name: 'Standins',
-            value: 'none atm',
-            inline: true,
-        },
-    ],
-    footer: {
-        text: 'A reminder will be sent out 15 minutes before raid start to all members.'
-    },
+const raids = {
+    "vog": "Vault of Glass",
+    "gos": "Garden of Salvation",
+    "sotp": "Scourge of the Past",
+    "lw": "Last Wish",
+    "levi": "Leviathan",
+    "cos": "Crown of Sorrow",
+    "eow": "Eater of Worlds",
+    "sos": "Spire of Stars"
 };
 
 module.exports = {
@@ -41,85 +18,122 @@ module.exports = {
     aliases: ['r'],
     args: true,
     description: 'Create a listing for a raid.',
+    usage: '<arg1 raid name> <arg2 time dd hh:mm> <arg3 additional info>',
     cooldown: 1,
     execute(message, args) {
-        let exampleEmbed = cloneDeep(coreEmbed);
-        //raid name: VoG GoS SotP LW Levi CoS EoW SoS
-        if (!raids[args[0].toLowerCase()]) return;
+        let msgEmbed = {};
+        //raid name: VoG GoS SotP LW Levi CoS EoW SoS DSC
+        if (!raids[args[0].toLowerCase()]) return; //TODO change return
         const info = args.splice(3).join(" ");
-        exampleEmbed.title = raids[args[0].toLowerCase()] + " : " + info;
-        //raid time: 
+        msgEmbed.title = raids[args[0].toLowerCase()] + " : " + info;
+        //raid time:
         //dd hh:mm
         let datePart = args[1];
         let timePart = args[2].split(':');
-        if (!datePart || !timePart[0] || !timePart[1]) return;
+        if (!datePart || !timePart[0] || !timePart[1]) return; //TODO change return
         let day = datePart;
         let date = new Date();
-        let endDate = day-date.getDate();
-        const startDate = new Date(
-            date.getFullYear(),date.getMonth(),date.getDate() + endDate, timePart[0], timePart[1], 0, 0
-        );
-        exampleEmbed.description = "Starting on: " + startDate.toString();
-        exampleEmbed.fields[0].value = "1. <@" + message.author.id + ">";
-        console.log(exampleEmbed);
+        let endDate = day - date.getDate();
+        const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + endDate, timePart[0], timePart[1], 0, 0);
+        const alertDate = new Date(startDate - new Date(900000));
+        //TODO check if time is in the past?
+        if (startDate - Date.now() < 0) return; //TODO change return
+        msgEmbed.description = "Starting on: " + startDate.toString();
+        msgEmbed.members = "1. <@" + message.author.id + ">";
+        let msg = utils.createMessage(msgEmbed);
         message.channel.send({
-            embed: exampleEmbed,
+            embed: msg,
             files: [{
                 attachment: 'images/raid.jpg',
                 name: "raid.jpg"
             }]
         }).then(message => {
             message.react("✅");
-            const data = {
+            utils.writeFile(message.id, {
                 leader: message.author.id,
                 date: startDate,
                 comment: info,
-                raid: args[0].toLowerCase()
-            };
-            fs.writeFile(`./_db/${message.id}`, JSON.stringify(data), (err) => { 
-                 if(err) {
-                     throw err;
-                 }
+                raid: args[0].toLowerCase(),
+                members: [message.author.id]
             });
+            //let timer = 5000;
+            let timer = alertDate - Date.now();
+            setTimeout(() => {
+                //TODO: get from db/file in future
+                let members = message.reactions.resolve('✅').users.cache.array().slice(1);
+                forEach(members, member => {
+                    console.log("sending message to raid member " + member.username);
+                    const leader = message.embeds[0].fields[0].value.split('\n')[0];
+                    const users = members.filter(user => "1. " + user.username !== leader);
+                    const msgMembers = users.splice(1, 6);
+                    const msgStandin = users.splice(7);
+                    let index = 2;
+                    let confirmed = msgMembers.map((user) => {
+                        return `${index++}. <@${user.id}>`;
+                    });
+                    for (; index < 7; index++) {
+                        confirmed.push(`${index}.`);
+                    }
+                    index = 1;
+                    let waiting = msgStandin.map((user) => {
+                        return `${index++}. <@${user.id}>`;
+                    });
+                    for (; index < 7; index++) {
+                        waiting.push(`${index}.`);
+                    }
+                    let msgEmbed = {};
+                    msgEmbed.title = "Raid is about to start: " + message.embeds[0].title;
+                    msgEmbed.description = message.embeds[0].description;
+                    msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
+                    msgEmbed.standins = `${waiting.join('\n')}`;
+                    msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
+                    let msg = utils.createMessage(msgEmbed);
+                    member.send({
+                        embed: msg,
+                        files: [{
+                            attachment: 'images/raid.jpg',
+                            name: "raid.jpg"
+                        }]
+                    }).catch(err => console.log(err));
+                });
+            }, timer);
         });
-        //TODO: save msg id to something
     },
     reacted(message) {
-        console.log(message);
         const emoji = message._emoji.name;
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
-        const users = message.users.cache.array().filter(user => "1. " + user.username !== leader);
-        // console.log('#############################');
-        // console.log(users);
-        // console.log('#############################');
+        const users = message.users.cache.array().filter(user => user.username !== leader.split(" ")[1]);
         const members = users.splice(1, 6);
         const standin = users.splice(7);
-        // console.log('#############################');
-        // console.log(message.message.embeds);
-        // console.log('#############################');
+        console.log("#############################");
+        console.log("leader: " + message.message.embeds[0].fields[0].value.split('\n')[0]);
+        console.log("users: " + message.users.cache.array());
+        console.log("users clean: "+users.splice(1, 6));
+        console.log("members: "+members);
+        console.log("#############################");
+        //TODO: fix leader being added anyways to list if pressing checkbox (issue with members.map)
         let index = 2;
-        let confirmed = members.map((user) => {
-            return `${index++}. <@${user.id}>`;
+        let confirmed = members.map((u) => {
+            return `${index++}. <@${u.id}>`;
         });
         for (; index < 7; index++) {
             confirmed.push(`${index}.`);
         }
+        console.log(confirmed);
         index = 1;
-        let waiting = standin.map((user) => {
-            return `${index++}. <@${user.id}>`;
+        let waiting = standin.map((u) => {
+            return `${index++}. <@${u.id}>`;
         });
         for (; index < 7; index++) {
             waiting.push(`${index}.`);
         }
-        let exampleEmbed = cloneDeep(coreEmbed);
-        exampleEmbed.title = message.message.embeds[0].title;
-        exampleEmbed.description = message.message.embeds[0].description;
-        exampleEmbed.fields[0].value = `${leader}\n${confirmed.join('\n')}`;
-        exampleEmbed.fields[1].value = `${waiting.join('\n')}`;
-        // console.log('#############################');
-        // console.log(exampleEmbed);
-        // console.log('#############################');
-        message.message.edit({ embed: exampleEmbed });
+        let msgEmbed = {};
+        msgEmbed.title = message.message.embeds[0].title;
+        msgEmbed.description = message.message.embeds[0].description;
+        msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
+        msgEmbed.standins = `${waiting.join('\n')}`;
+        let msg = utils.createMessage(msgEmbed);
+        message.message.edit({ embed: msg });
     }
 };
