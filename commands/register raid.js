@@ -1,16 +1,21 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
+const raids =  {
+    "vog" : "Vault of Glass", 
+    "gos" : "Garden of Salvation", 
+    "sotp" : "Scourge of the Past", 
+    "lw" : "Last Wish", 
+    "levi" : "Leviathan", 
+    "cos" : "Crown of Sorrow", 
+    "eow" : "Eater of Worlds", 
+    "sos" : "Spire of Stars"
+};
+
 const coreEmbed = {
     color: 0x0099ff,
-    title: 'Raid ',
-    url: 'https://discord.js.org',
-    author: {
-        name: 'Some name',
-        icon_url: 'https://i.imgur.com/wSTFkRM.png',
-        url: 'https://discord.js.org',
-    },
+    title: 'Raid',
     description: 'Some description here',
     thumbnail: {
-        url: 'https://i.imgur.com/wSTFkRM.png',
+        url: 'attachment://raid.jpg',
     },
     fields: [
         {
@@ -24,13 +29,8 @@ const coreEmbed = {
             inline: true,
         },
     ],
-    image: {
-        url: 'https://i.imgur.com/wSTFkRM.png',
-    },
-    timestamp: new Date(),
     footer: {
-        text: 'A reminder will be sent out 15 minutes before raid start to all members.',
-        icon_url: 'https://i.imgur.com/wSTFkRM.png',
+        text: 'A reminder will be sent out 15 minutes before raid start to all members.'
     },
 };
 
@@ -42,13 +42,29 @@ module.exports = {
     cooldown: 1,
     execute(message, args) {
         let exampleEmbed = cloneDeep(coreEmbed);
-        //raid name: GoS SotP Levi LW CoS EoW SoS
-        args[0]
-
+        //raid name: VoG GoS SotP LW Levi CoS EoW SoS
+        if (!raids[args[0].toLowerCase()]) return;
+        exampleEmbed.title = raids[args[0].toLowerCase()] + " : " + args.splice(3).join(" ");
         //raid time: 
-        args[1]
-        exampleEmbed.fields[0].value = "1. <@"+message.author.id+">";
-        message.channel.send({ embed: exampleEmbed }).then(message => {
+        //dd hh:mm
+        let datePart = args[1];
+        let timePart = args[2].split(':');
+        if (!datePart || !timePart[0] || !timePart[1]) return;
+        let day = datePart;
+        let date = new Date();
+        let endDate = day-date.getDate();
+        exampleEmbed.description = "Starting on: " + new Date(
+            date.getFullYear(),date.getMonth(),date.getDate() + endDate, timePart[0], timePart[1], 0, 0
+        ).toString();
+        exampleEmbed.fields[0].value = "1. <@" + message.author.id + ">";
+        console.log(exampleEmbed);
+        message.channel.send({
+            embed: exampleEmbed,
+            files: [{
+                attachment: 'images/raid.jpg',
+                name: "raid.jpg"
+            }]
+        }).then(message => {
             message.react("✅");
         });
         //TODO: save msg id to something
@@ -58,7 +74,7 @@ module.exports = {
         const emoji = message._emoji.name;
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
-        const users = message.users.cache.array().filter(user => "1. "+user.username !== leader);
+        const users = message.users.cache.array().filter(user => "1. " + user.username !== leader);
         console.log('#############################');
         console.log(users);
         console.log('#############################');
@@ -71,22 +87,24 @@ module.exports = {
         let confirmed = members.map((user) => {
             return `${index++}. <@${user.id}>`;
         });
-        for(;index < 7; index++) {
+        for (; index < 7; index++) {
             confirmed.push(`${index}.`);
         }
         index = 1;
         let waiting = standin.map((user) => {
             return `${index++}. <@${user.id}>`;
         });
-        for(;index < 7; index++) {
+        for (; index < 7; index++) {
             waiting.push(`${index}.`);
         }
         let exampleEmbed = cloneDeep(coreEmbed);
+        exampleEmbed.title = message.message.embeds[0].title;
+        exampleEmbed.description = message.message.embeds[0].description;
         exampleEmbed.fields[0].value = `${leader}\n${confirmed.join('\n')}`;
         exampleEmbed.fields[1].value = `${waiting.join('\n')}`;
         console.log('#############################');
         console.log(exampleEmbed);
         console.log('#############################');
-        message.message.edit({ embed : exampleEmbed });
+        message.message.edit({ embed: exampleEmbed });
     }
 };
