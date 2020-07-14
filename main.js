@@ -1,6 +1,8 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const { prefix, token, channel } = require('./config.json');
+const { promisify } = require('util');
+const { forEach } = require('lodash');
 
 const client = new Discord.Client({ autoReconnect: true });
 client.commands = new Discord.Collection();
@@ -14,8 +16,26 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command);
 }
 
-client.on('ready', () => {
-    console.log('*** destiny raid bot ready ***');
+client.on('ready', async() => {
+    await fs.mkdir('./_db', (err) => {
+        if(err && err.code !== 'EEXIST') {
+            throw err;
+        }
+    });
+
+    /** @type {Discord.TextChannel} */
+    const ch = await client.channels.fetch(channel);
+
+    fs.readdir('./_db', (err, files) => {
+        if(err) {
+            throw err;
+        }
+        forEach(files, async(fileName) => {
+            const message = await ch.messages.fetch(fileName, true);
+            await message.reactions.resolve('✅').users.fetch();
+        });
+        console.log('*** destiny raid bot ready ***');
+    });
 });
 
 client.on('error', err => {
@@ -26,7 +46,7 @@ client.on('disconnected', () => {
     console.log('*** crashed, reconnecting ***');
 });
 
-client.on('messageReactionAdd', (message, user) => {
+client.on('messageReactionAdd', async(message, user) => {
     console.log(message);
     const command = client.commands.get("raid");
     try {

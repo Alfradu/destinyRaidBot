@@ -1,4 +1,6 @@
+const fs = require('fs');
 const cloneDeep = require('lodash/fp/cloneDeep');
+
 const raids =  {
     "vog" : "Vault of Glass",
     "gos" : "Garden of Salvation", 
@@ -44,7 +46,8 @@ module.exports = {
         let exampleEmbed = cloneDeep(coreEmbed);
         //raid name: VoG GoS SotP LW Levi CoS EoW SoS
         if (!raids[args[0].toLowerCase()]) return;
-        exampleEmbed.title = raids[args[0].toLowerCase()] + " : " + args.splice(3).join(" ");
+        const info = args.splice(3).join(" ");
+        exampleEmbed.title = raids[args[0].toLowerCase()] + " : " + info;
         //raid time: 
         //dd hh:mm
         let datePart = args[1];
@@ -53,9 +56,10 @@ module.exports = {
         let day = datePart;
         let date = new Date();
         let endDate = day-date.getDate();
-        exampleEmbed.description = "Starting on: " + new Date(
+        const startDate = new Date(
             date.getFullYear(),date.getMonth(),date.getDate() + endDate, timePart[0], timePart[1], 0, 0
-        ).toString();
+        );
+        exampleEmbed.description = "Starting on: " + startDate.toString();
         exampleEmbed.fields[0].value = "1. <@" + message.author.id + ">";
         console.log(exampleEmbed);
         message.channel.send({
@@ -66,6 +70,17 @@ module.exports = {
             }]
         }).then(message => {
             message.react("✅");
+            const data = {
+                leader: message.author.id,
+                date: startDate,
+                comment: info,
+                raid: args[0].toLowerCase()
+            };
+            fs.writeFile(`./_db/${message.id}`, JSON.stringify(data), (err) => { 
+                 if(err) {
+                     throw err;
+                 }
+            });
         });
         //TODO: save msg id to something
     },
@@ -75,14 +90,14 @@ module.exports = {
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
         const users = message.users.cache.array().filter(user => "1. " + user.username !== leader);
-        console.log('#############################');
-        console.log(users);
-        console.log('#############################');
+        // console.log('#############################');
+        // console.log(users);
+        // console.log('#############################');
         const members = users.splice(1, 6);
         const standin = users.splice(7);
-        console.log('#############################');
-        console.log(message.message.embeds);
-        console.log('#############################');
+        // console.log('#############################');
+        // console.log(message.message.embeds);
+        // console.log('#############################');
         let index = 2;
         let confirmed = members.map((user) => {
             return `${index++}. <@${user.id}>`;
@@ -102,9 +117,9 @@ module.exports = {
         exampleEmbed.description = message.message.embeds[0].description;
         exampleEmbed.fields[0].value = `${leader}\n${confirmed.join('\n')}`;
         exampleEmbed.fields[1].value = `${waiting.join('\n')}`;
-        console.log('#############################');
-        console.log(exampleEmbed);
-        console.log('#############################');
+        // console.log('#############################');
+        // console.log(exampleEmbed);
+        // console.log('#############################');
         message.message.edit({ embed: exampleEmbed });
     }
 };
