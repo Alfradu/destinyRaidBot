@@ -26,7 +26,7 @@ module.exports = {
         //raid name: VoG GoS SotP LW Levi CoS EoW SoS DSC
         if (!raids[args[0].toLowerCase()]) return; //TODO change return
         const info = args.splice(3).join(" ");
-        msgEmbed.title = raids[args[0].toLowerCase()] + " : " + info;
+        msgEmbed.title = raids[args[0].toLowerCase()] + ". " + info;
         //raid time:
         //dd hh:mm
         let datePart = args[1];
@@ -60,7 +60,6 @@ module.exports = {
                 members: [raidLeader.id]
             });
             let fulltimer = startDate - Date.now();
-            console.log(alertDate- Date.now());
             if ( Date.alertDate > Date.now()) {
                 let timer = alertDate - Date.now();
                 setTimeout(() => {
@@ -87,7 +86,7 @@ module.exports = {
                             waiting.push(`${index}.`);
                         }
                         let msgEmbed = {};
-                        msgEmbed.title = "Raid is about to start: " + message.embeds[0].title;
+                        msgEmbed.title = "Raid is about to start. " + message.embeds[0].title;
                         msgEmbed.description = message.embeds[0].description;
                         msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
                         msgEmbed.standins = `${waiting.join('\n')}`;
@@ -111,6 +110,7 @@ module.exports = {
         });
     },
     reacted(message, reactUser) {
+        if (!utils.messageExists(message.message.id)) return;
         if (reactUser.bot) return;
         const emoji = message._emoji.name;
         if (emoji !== "✅") return;
@@ -148,8 +148,5 @@ module.exports = {
             raid: messageFile.raid,
             members: [messageFile.leader].concat(users.map(user => user.id))
         });
-        msgEmbed.color = 0xdc3939;
-        let msg2 = utils.createMessage(msgEmbed);
-        utils.archiveMessage(message.message, msg2);
     }
 };

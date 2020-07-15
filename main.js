@@ -11,6 +11,8 @@ const cooldowns = new Discord.Collection();
 var currentTitle = '';
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const files = fs.readdirSync('./_db');
+
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.name, command);
@@ -22,12 +24,15 @@ client.on('ready', async () => {
             throw err;
         }
     });
-    /** @type {Discord.TextChannel} */
     const ch = await client.channels.fetch(channel);
-    let files = utils.readDir();
     forEach(files, async (fileName) => {
         const message = await ch.messages.fetch(fileName, true);
-        await message.reactions.resolve('✅').users.fetch();
+        let dateCheck = Date.parse(utils.readFile(message.id).date) < Date.now();
+        if (dateCheck) {
+            utils.archiveRaid(message);
+        } else {
+            await message.reactions.resolve('✅').users.fetch();
+        }
     });
     console.log('*** destiny raid bot ready ***');
 });
@@ -47,7 +52,6 @@ client.on('messageReactionAdd', async (message, user) => {
     }
     catch (error) {
         console.error(error);
-        message.reply('There was an error trying to execute that command!');
     }
 });
 
@@ -58,7 +62,6 @@ client.on('messageReactionRemove', (message, user) => {
     }
     catch (error) {
         console.error(error);
-        message.reply('There was an error trying to execute that command!');
     }
 });
 

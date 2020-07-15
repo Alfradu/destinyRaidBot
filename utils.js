@@ -29,6 +29,7 @@ module.exports = {
         fs.unlink(`./_db/${message.id}`, (err) => {
             if (err) throw err;
             let embeds = message.embeds[0];
+            embeds.title = "Raid listing archived: " + embeds.title;
             embeds.color = 0xdc3939;
             embeds.thumbnail = {};
             embeds.thumbnail.url = 'attachment://raid.jpg';
@@ -47,15 +48,12 @@ module.exports = {
         if (input.footer) cloneEmbed.footer.text = input.footer;
         return cloneEmbed;
     },
-    //TODO handle with db
-    readDir() {
-        fs.readdir(`./_db/`, (err, files) => {
-            if (err) throw err;
-            return files;
-        });
+    messageExists(id){
+        return fs.existsSync(`./_db/${id}`);
     },
     //TODO handle with db
     readFile(id) {
+        if (!fs.existsSync(`./_db/${id}`)) return;
         let file = fs.readFileSync(`./_db/${id}`, 'utf8');
         return JSON.parse(file);
     },
