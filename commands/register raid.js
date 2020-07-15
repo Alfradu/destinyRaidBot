@@ -37,7 +37,7 @@ module.exports = {
         let endDate = day - date.getDate();
         const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + endDate, timePart[0], timePart[1], 0, 0);
         const alertDate = new Date(startDate - new Date(900000));
-        if (startDate - Date.now() < 0) return; //TODO change return
+        if (startDate < Date.now()) return; //TODO change return
         msgEmbed.description = "Starting on: " + startDate.toString();
         const raidLeader = message.author;
         msgEmbed.members = "1. <@" + raidLeader.id + ">\n2.\n3.\n4.\n5.\n6.";
@@ -50,8 +50,8 @@ module.exports = {
                 name: "raid.jpg"
             }]
         }).then(message => {
+            message.react('✅');
             message.pin();
-            message.react("✅");
             utils.writeFile(message.id, {
                 leader: raidLeader.id,
                 date: startDate,
@@ -59,47 +59,55 @@ module.exports = {
                 raid: args[0].toLowerCase(),
                 members: [raidLeader.id]
             });
-            let timer = alertDate - Date.now();
+            let fulltimer = startDate - Date.now();
+            console.log(alertDate- Date.now());
+            if ( Date.alertDate > Date.now()) {
+                let timer = alertDate - Date.now();
+                setTimeout(() => {
+                    let members = message.reactions.resolve('✅').users.cache.array().slice(1);
+                    members.push(raidLeader);
+                    forEach(members, member => {
+                        console.log("sending message to raid member " + member.username);
+                        const leader = message.embeds[0].fields[0].value.split('\n')[0];
+                        const users = members.filter(user => "1. " + user.username !== leader);
+                        const msgMembers = users.splice(1, 6);
+                        const msgStandin = users.splice(7);
+                        let index = 2;
+                        let confirmed = msgMembers.map((user) => {
+                            return `${index++}. <@${user.id}>`;
+                        });
+                        for (; index < 7; index++) {
+                            confirmed.push(`${index}.`);
+                        }
+                        index = 1;
+                        let waiting = msgStandin.map((user) => {
+                            return `${index++}. <@${user.id}>`;
+                        });
+                        for (; index < 7; index++) {
+                            waiting.push(`${index}.`);
+                        }
+                        let msgEmbed = {};
+                        msgEmbed.title = "Raid is about to start: " + message.embeds[0].title;
+                        msgEmbed.description = message.embeds[0].description;
+                        msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
+                        msgEmbed.standins = `${waiting.join('\n')}`;
+                        msgEmbed.color = 0x7978c7;
+                        msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
+                        let msg = utils.createMessage(msgEmbed);
+                        member.send({
+                            embed: msg,
+                            files: [{
+                                attachment: 'images/raid.jpg',
+                                name: "raid.jpg"
+                            }]
+                        }).catch(err => console.log(err));
+                    });
+                }, timer);
+            }
             setTimeout(() => {
-                let members = message.reactions.resolve('✅').users.cache.array().slice(1);
-                members.push(raidLeader);
-                forEach(members, member => {
-                    console.log("sending message to raid member " + member.username);
-                    const leader = message.embeds[0].fields[0].value.split('\n')[0];
-                    const users = members.filter(user => "1. " + user.username !== leader);
-                    const msgMembers = users.splice(1, 6);
-                    const msgStandin = users.splice(7);
-                    let index = 2;
-                    let confirmed = msgMembers.map((user) => {
-                        return `${index++}. <@${user.id}>`;
-                    });
-                    for (; index < 7; index++) {
-                        confirmed.push(`${index}.`);
-                    }
-                    index = 1;
-                    let waiting = msgStandin.map((user) => {
-                        return `${index++}. <@${user.id}>`;
-                    });
-                    for (; index < 7; index++) {
-                        waiting.push(`${index}.`);
-                    }
-                    let msgEmbed = {};
-                    msgEmbed.title = "Raid is about to start: " + message.embeds[0].title;
-                    msgEmbed.description = message.embeds[0].description;
-                    msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
-                    msgEmbed.standins = `${waiting.join('\n')}`;
-                    msgEmbed.color = 0x7978c7;
-                    msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
-                    let msg = utils.createMessage(msgEmbed);
-                    member.send({
-                        embed: msg,
-                        files: [{
-                            attachment: 'images/raid.jpg',
-                            name: "raid.jpg"
-                        }]
-                    }).catch(err => console.log(err));
-                });
-            }, timer);
+                message.unpin();
+                utils.archiveRaid(message);
+            }, fulltimer);
         });
     },
     reacted(message, reactUser) {
@@ -108,7 +116,7 @@ module.exports = {
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
         if (reactUser.id == leader) return;
-        const users = message.users.cache.array().filter(user => "1. <@"+user.id+">" !== leader);
+        const users = message.users.cache.array().filter(user => "1. <@" + user.id + ">" !== leader);
         const members = users.splice(1, 6);
         const standin = users.splice(7);
         let index = 2;
@@ -140,5 +148,8 @@ module.exports = {
             raid: messageFile.raid,
             members: [messageFile.leader].concat(users.map(user => user.id))
         });
+        msgEmbed.color = 0xdc3939;
+        let msg2 = utils.createMessage(msgEmbed);
+        utils.archiveMessage(message.message, msg2);
     }
 };

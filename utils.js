@@ -1,7 +1,6 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
 const fs = require('fs');
 const coreEmbed = {
-    //archived 0xdc3939
     color: 0x7adc39,
     title: 'Raid',
     description: 'Some description here',
@@ -26,11 +25,16 @@ const coreEmbed = {
 };
 
 module.exports = {
-    stringToArr(string) {
-        return [];
-    },
     archiveRaid(message) {
-
+        fs.unlink(`./_db/${message.id}`, (err) => {
+            if (err) throw err;
+            let embeds = message.embeds[0];
+            embeds.color = 0xdc3939;
+            embeds.thumbnail = {};
+            embeds.thumbnail.url = 'attachment://raid.jpg';
+            message.edit({embed: embeds});
+            console.log('successfully archived message and deleted local log '+message.id);
+        });
     },
     createMessage(input) {
         let cloneEmbed = cloneDeep(coreEmbed);
@@ -46,9 +50,7 @@ module.exports = {
     //TODO handle with db
     readDir() {
         fs.readdir(`./_db/`, (err, files) => {
-            if (err) {
-                throw err;
-            }
+            if (err) throw err;
             return files;
         });
     },
@@ -60,12 +62,10 @@ module.exports = {
     //TODO handle with db
     writeFile(id, input) {
         fs.writeFile(`./_db/${id}`, JSON.stringify(input), (err) => {
-            if (err) {
-                throw err;
-            }
+            if (err) throw err;
         });
     },
-    debug(input){
+    debug(input) {
         console.log("########################");
         console.log(input);
         console.log("########################");
