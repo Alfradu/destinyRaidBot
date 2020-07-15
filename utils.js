@@ -1,7 +1,8 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
 const fs = require('fs');
 const coreEmbed = {
-    color: 0x0099ff,
+    //archived 0xdc3939
+    color: 0x7adc39,
     title: 'Raid',
     description: 'Some description here',
     thumbnail: {
@@ -20,7 +21,7 @@ const coreEmbed = {
         },
     ],
     footer: {
-        text: 'A reminder will be sent out 15 minutes before raid start to all members.'
+        text: 'A reminder will be sent out 15 minutes before raid start to all members.\n Press the green checkmark below to sign up for the raid.'
     },
 };
 

@@ -17,6 +17,7 @@ module.exports = {
     name: 'raid',
     aliases: ['r'],
     args: true,
+    guildOnly: true,
     description: 'Create a listing for a raid.',
     usage: '<arg1 raid name> <arg2 time dd hh:mm> <arg3 additional info>',
     cooldown: 1,
@@ -39,7 +40,8 @@ module.exports = {
         //TODO check if time is in the past?
         if (startDate - Date.now() < 0) return; //TODO change return
         msgEmbed.description = "Starting on: " + startDate.toString();
-        msgEmbed.members = "1. <@" + message.author.id + ">";
+        const raidLeader = message.author;
+        msgEmbed.members = "1. <@" + raidLeader.id + ">";
         let msg = utils.createMessage(msgEmbed);
         message.channel.send({
             embed: msg,
@@ -50,7 +52,7 @@ module.exports = {
         }).then(message => {
             message.react("✅");
             utils.writeFile(message.id, {
-                leader: message.author.id,
+                leader: raidLeader.id,
                 date: startDate,
                 comment: info,
                 raid: args[0].toLowerCase(),
@@ -61,6 +63,7 @@ module.exports = {
             setTimeout(() => {
                 //TODO: get from db/file in future
                 let members = message.reactions.resolve('✅').users.cache.array().slice(1);
+                members.push(raidLeader);
                 forEach(members, member => {
                     console.log("sending message to raid member " + member.username);
                     const leader = message.embeds[0].fields[0].value.split('\n')[0];
@@ -86,6 +89,7 @@ module.exports = {
                     msgEmbed.description = message.embeds[0].description;
                     msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
                     msgEmbed.standins = `${waiting.join('\n')}`;
+                    msgEmbed.color = 0x7978c7;
                     msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
                     let msg = utils.createMessage(msgEmbed);
                     member.send({
@@ -103,16 +107,9 @@ module.exports = {
         const emoji = message._emoji.name;
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
-        const users = message.users.cache.array().filter(user => user.username !== leader.split(" ")[1]);
+        const users = message.users.cache.array().filter(user => "1. <@"+user.id+">" !== leader);
         const members = users.splice(1, 6);
         const standin = users.splice(7);
-        console.log("#############################");
-        console.log("leader: " + message.message.embeds[0].fields[0].value.split('\n')[0]);
-        console.log("users: " + message.users.cache.array());
-        console.log("users clean: "+users.splice(1, 6));
-        console.log("members: "+members);
-        console.log("#############################");
-        //TODO: fix leader being added anyways to list if pressing checkbox (issue with members.map)
         let index = 2;
         let confirmed = members.map((u) => {
             return `${index++}. <@${u.id}>`;
@@ -120,7 +117,6 @@ module.exports = {
         for (; index < 7; index++) {
             confirmed.push(`${index}.`);
         }
-        console.log(confirmed);
         index = 1;
         let waiting = standin.map((u) => {
             return `${index++}. <@${u.id}>`;
