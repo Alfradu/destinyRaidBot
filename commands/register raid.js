@@ -37,11 +37,11 @@ module.exports = {
         let endDate = day - date.getDate();
         const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + endDate, timePart[0], timePart[1], 0, 0);
         const alertDate = new Date(startDate - new Date(900000));
-        //TODO check if time is in the past?
         if (startDate - Date.now() < 0) return; //TODO change return
         msgEmbed.description = "Starting on: " + startDate.toString();
         const raidLeader = message.author;
-        msgEmbed.members = "1. <@" + raidLeader.id + ">";
+        msgEmbed.members = "1. <@" + raidLeader.id + ">\n2.\n3.\n4.\n5.\n6.";
+        msgEmbed.standins = "1.\n2.\n3.\n4.\n5.\n6."
         let msg = utils.createMessage(msgEmbed);
         message.channel.send({
             embed: msg,
@@ -50,18 +50,17 @@ module.exports = {
                 name: "raid.jpg"
             }]
         }).then(message => {
+            message.pin();
             message.react("✅");
             utils.writeFile(message.id, {
                 leader: raidLeader.id,
                 date: startDate,
                 comment: info,
                 raid: args[0].toLowerCase(),
-                members: [message.author.id]
+                members: [raidLeader.id]
             });
-            //let timer = 5000;
             let timer = alertDate - Date.now();
             setTimeout(() => {
-                //TODO: get from db/file in future
                 let members = message.reactions.resolve('✅').users.cache.array().slice(1);
                 members.push(raidLeader);
                 forEach(members, member => {
@@ -103,10 +102,12 @@ module.exports = {
             }, timer);
         });
     },
-    reacted(message) {
+    reacted(message, reactUser) {
+        if (reactUser.bot) return;
         const emoji = message._emoji.name;
         if (emoji !== "✅") return;
         const leader = message.message.embeds[0].fields[0].value.split('\n')[0];
+        if (reactUser.id == leader) return;
         const users = message.users.cache.array().filter(user => "1. <@"+user.id+">" !== leader);
         const members = users.splice(1, 6);
         const standin = users.splice(7);
@@ -131,5 +132,13 @@ module.exports = {
         msgEmbed.standins = `${waiting.join('\n')}`;
         let msg = utils.createMessage(msgEmbed);
         message.message.edit({ embed: msg });
+        let messageFile = utils.readFile(message.message.id);
+        utils.writeFile(message.message.id, {
+            leader: messageFile.leader,
+            date: messageFile.date,
+            comment: messageFile.comment,
+            raid: messageFile.raid,
+            members: [messageFile.leader].concat(users.map(user => user.id))
+        });
     }
 };

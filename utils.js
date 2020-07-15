@@ -29,7 +29,7 @@ module.exports = {
     stringToArr(string) {
         return [];
     },
-    deleteRaid(message) {
+    archiveRaid(message) {
 
     },
     createMessage(input) {
@@ -44,8 +44,18 @@ module.exports = {
         return cloneEmbed;
     },
     //TODO handle with db
-    readFile(id, input) {
-
+    readDir() {
+        fs.readdir(`./_db/`, (err, files) => {
+            if (err) {
+                throw err;
+            }
+            return files;
+        });
+    },
+    //TODO handle with db
+    readFile(id) {
+        let file = fs.readFileSync(`./_db/${id}`, 'utf8');
+        return JSON.parse(file);
     },
     //TODO handle with db
     writeFile(id, input) {
@@ -54,5 +64,10 @@ module.exports = {
                 throw err;
             }
         });
+    },
+    debug(input){
+        console.log("########################");
+        console.log(input);
+        console.log("########################");
     }
 };
