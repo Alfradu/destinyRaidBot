@@ -1,6 +1,5 @@
 const fs = require('fs');
 const utils = require('../utils.js');
-const { forEach } = require('lodash');
 
 const raids = {
     "vog": "Vault of Glass",
@@ -27,16 +26,10 @@ module.exports = {
         if (!raids[args[0].toLowerCase()]) return; //TODO change return
         const info = args.splice(3).join(" ");
         msgEmbed.title = raids[args[0].toLowerCase()] + ". " + info;
-        //raid time:
-        //dd hh:mm
-        let datePart = args[1];
         let timePart = args[2].split(':');
-        if (!datePart || !timePart[0] || !timePart[1]) return; //TODO change return
-        let day = datePart;
+        if (!args[1] || !timePart[0] || !timePart[1]) return; //TODO change return
         let date = new Date();
-        let endDate = day - date.getDate();
-        const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + endDate, timePart[0], timePart[1], 0, 0);
-        const alertDate = new Date(startDate - new Date(900000));
+        const startDate = new Date(date.getFullYear(), date.getMonth(), args[1], timePart[0], timePart[1], 0, 0);
         if (startDate < Date.now()) return; //TODO change return
         msgEmbed.description = "Starting on: " + startDate.toString();
         const raidLeader = message.author;
@@ -46,7 +39,7 @@ module.exports = {
         message.channel.send({
             embed: msg,
             files: [{
-                attachment: 'images/raid.jpg',
+                attachment: './src/images/raid.jpg',
                 name: "raid.jpg"
             }]
         }).then(message => {
@@ -59,54 +52,7 @@ module.exports = {
                 raid: args[0].toLowerCase(),
                 members: [raidLeader.id]
             });
-            let fulltimer = startDate - Date.now();
-            if ( Date.alertDate > Date.now()) {
-                let timer = alertDate - Date.now();
-                setTimeout(() => {
-                    let members = message.reactions.resolve('✅').users.cache.array().slice(1);
-                    members.push(raidLeader);
-                    forEach(members, member => {
-                        console.log("sending message to raid member " + member.username);
-                        const leader = message.embeds[0].fields[0].value.split('\n')[0];
-                        const users = members.filter(user => "1. " + user.username !== leader);
-                        const msgMembers = users.splice(1, 6);
-                        const msgStandin = users.splice(7);
-                        let index = 2;
-                        let confirmed = msgMembers.map((user) => {
-                            return `${index++}. <@${user.id}>`;
-                        });
-                        for (; index < 7; index++) {
-                            confirmed.push(`${index}.`);
-                        }
-                        index = 1;
-                        let waiting = msgStandin.map((user) => {
-                            return `${index++}. <@${user.id}>`;
-                        });
-                        for (; index < 7; index++) {
-                            waiting.push(`${index}.`);
-                        }
-                        let msgEmbed = {};
-                        msgEmbed.title = "Raid is about to start. " + message.embeds[0].title;
-                        msgEmbed.description = message.embeds[0].description;
-                        msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
-                        msgEmbed.standins = `${waiting.join('\n')}`;
-                        msgEmbed.color = 0x7978c7;
-                        msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
-                        let msg = utils.createMessage(msgEmbed);
-                        member.send({
-                            embed: msg,
-                            files: [{
-                                attachment: 'images/raid.jpg',
-                                name: "raid.jpg"
-                            }]
-                        }).catch(err => console.log(err));
-                    });
-                }, timer);
-            }
-            setTimeout(() => {
-                message.unpin();
-                utils.archiveRaid(message);
-            }, fulltimer);
+            utils.activateRaid(message, raidLeader, startDate);
         });
     },
     reacted(message, reactUser) {

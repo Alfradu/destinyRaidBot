@@ -11,7 +11,6 @@ const delayRaid = require('./commands/delay raid');
 const displayRaids = require('./commands/display raids');
 const editRaid = require('./commands/edit raid');
 const registerRaid = require('./commands/register raid');
-const { captureRejectionSymbol } = require('events');
 
 const client = new Discord.Client({ autoReconnect: true });
 client.commands = new Discord.Collection();
@@ -43,6 +42,9 @@ client.on('ready', async () => {
             utils.archiveRaid(message);
         } else {
             await message.reactions.resolve('✅').users.fetch();
+            let currentFile = utils.readFile(fileName);
+            utils.debug(Date.parse(currentFile.date));
+            utils.activateRaid(message, currentFile.leader, Date.parse(currentFile.date));
         }
     });
     console.log('*** destiny raid bot ready ***');
