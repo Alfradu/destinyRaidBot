@@ -2,9 +2,9 @@
   "name": "destiny-raid-help",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "./src/main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "cross-env NODE_PATH=./src node ./src/main.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c && xcopy src\\images dist\\images /i /y"
   },
@@ -21,6 +21,7 @@
     "@rollup/plugin-commonjs": "^14.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^8.4.0",
+    "cross-env": "^7.0.2",
     "rollup": "^2.21.0"
   }
 }

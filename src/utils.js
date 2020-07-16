@@ -1,5 +1,9 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
 const fs = require('fs');
+const path = require('path');
+
+const dbFolderPath = path.join(__dirname, '_db');
+
 const coreEmbed = {
     color: 0x7adc39,
     title: 'Raid',
@@ -26,7 +30,7 @@ const coreEmbed = {
 
 module.exports = {
     archiveRaid(message) {
-        fs.unlink(`./_db/${message.id}`, (err) => {
+        fs.unlink(`${dbFolderPath}/${message.id}`, (err) => {
             if (err) throw err;
             let embeds = message.embeds[0];
             embeds.title = "Raid listing archived: " + embeds.title;
@@ -49,17 +53,17 @@ module.exports = {
         return cloneEmbed;
     },
     messageExists(id){
-        return fs.existsSync(`./_db/${id}`);
+        return fs.existsSync(`${dbFolderPath}/${id}`);
     },
     //TODO handle with db
     readFile(id) {
-        if (!fs.existsSync(`./_db/${id}`)) return;
-        let file = fs.readFileSync(`./_db/${id}`, 'utf8');
+        if (!fs.existsSync(`${dbFolderPath}/${id}`)) return;
+        let file = fs.readFileSync(`${dbFolderPath}/${id}`, 'utf8');
         return JSON.parse(file);
     },
     //TODO handle with db
     writeFile(id, input) {
-        fs.writeFile(`./_db/${id}`, JSON.stringify(input), (err) => {
+        fs.writeFile(`${dbFolderPath}/${id}`, JSON.stringify(input), (err) => {
             if (err) throw err;
         });
     },

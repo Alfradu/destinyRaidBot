@@ -1,8 +1,17 @@
 const fs = require('fs');
+const path = require('path');
 const utils = require('./utils.js');
 const Discord = require('discord.js');
-const { prefix, token, channel } = require('./config.json');
+const { prefix, token, channel } = require('config.json');
 const { forEach } = require('lodash');
+
+const cancelRaid = require('./commands/cancel raid');
+const commands = require('./commands/commands');
+const delayRaid = require('./commands/delay raid');
+const displayRaids = require('./commands/display raids');
+const editRaid = require('./commands/edit raid');
+const registerRaid = require('./commands/register raid');
+const { captureRejectionSymbol } = require('events');
 
 const client = new Discord.Client({ autoReconnect: true });
 client.commands = new Discord.Collection();
@@ -10,20 +19,22 @@ const cooldowns = new Discord.Collection();
 
 var currentTitle = '';
 
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-const files = fs.readdirSync('./_db');
+client.commands.set(cancelRaid.name, cancelRaid);
+client.commands.set(commands.name, commands);
+client.commands.set(delayRaid.name, delayRaid);
+client.commands.set(displayRaids.name, displayRaids);
+client.commands.set(editRaid.name, editRaid);
+client.commands.set(registerRaid.name, registerRaid);
 
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.name, command);
-}
+const dbFolderPath = path.join(__dirname, '_db');
 
 client.on('ready', async () => {
-    await fs.mkdir('./_db', (err) => {
+    await fs.mkdir(dbFolderPath, (err) => {
         if (err && err.code !== 'EEXIST') {
             throw err;
         }
     });
+    const files = fs.readdirSync(dbFolderPath);
     const ch = await client.channels.fetch(channel);
     forEach(files, async (fileName) => {
         const message = await ch.messages.fetch(fileName, true);
