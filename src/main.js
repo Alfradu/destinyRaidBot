@@ -43,7 +43,6 @@ client.on('ready', async () => {
         } else {
             await message.reactions.resolve('✅').users.fetch();
             let currentFile = utils.readFile(fileName);
-            utils.debug(Date.parse(currentFile.date));
             utils.activateRaid(message, currentFile.leader, Date.parse(currentFile.date));
         }
     });

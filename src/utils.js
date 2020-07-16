@@ -40,7 +40,7 @@ module.exports = {
             embeds.thumbnail = {};
             embeds.thumbnail.url = 'attachment://raid.jpg';
             message.edit({ embed: embeds });
-            console.log('successfully archived message and deleted local log ' + message.id);
+            console.log('archived message and deleted local log ' + message.id);
         });
     },
     activateRaid(message, rLeader, startDate) {
@@ -90,6 +90,7 @@ module.exports = {
         setTimeout(() => {
             module.exports.archiveRaid(message);
         }, startDate - Date.now());
+        console.log('activated times for message ' + message.id);
     },
     createMessage(input) {
         let cloneEmbed = cloneDeep(coreEmbed);
