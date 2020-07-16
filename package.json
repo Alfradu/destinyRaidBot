@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "node main.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +15,12 @@
     "all": "0.0.0",
     "dependencies": "0.0.1",
     "discord.js": "^12.2.0",
-    "lodash": "^4.17.19",
-    "sequelize": "^6.3.3"
+    "lodash": "^4.17.19"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^8.4.0",
+    "rollup": "^2.21.0"
   }
 }
