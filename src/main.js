@@ -20,7 +20,6 @@ var currentTitle = '';
 
 client.commands.set(cancelRaid.name, cancelRaid);
 client.commands.set(commands.name, commands);
-client.commands.set(delayRaid.name, delayRaid);
 client.commands.set(displayRaids.name, displayRaids);
 client.commands.set(editRaid.name, editRaid);
 client.commands.set(registerRaid.name, registerRaid);
