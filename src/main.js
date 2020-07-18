@@ -7,7 +7,6 @@ const { forEach } = require('lodash');
 
 const cancelRaid = require('./commands/cancel raid');
 const commands = require('./commands/commands');
-const delayRaid = require('./commands/delay raid');
 const displayRaids = require('./commands/display raids');
 const editRaid = require('./commands/edit raid');
 const registerRaid = require('./commands/register raid');
