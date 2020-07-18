@@ -42,6 +42,7 @@ client.on('ready', async () => {
             utils.archiveRaid(message);
         } else {
             await message.reactions.resolve('✅').users.fetch();
+            await message.reactions.resolve('❓').users.fetch();
             let currentFile = utils.readFile(fileName);
             utils.activateRaid(message, currentFile.leader, Date.parse(currentFile.date));
         }
@@ -70,7 +71,7 @@ client.on('messageReactionAdd', async (message, user) => {
 client.on('messageReactionRemove', (message, user) => {
     const command = client.commands.get("raid");
     try {
-        command.reacted(message, user);
+        command.unreacted(message, user);
     }
     catch (error) {
         console.error(error);

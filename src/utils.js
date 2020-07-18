@@ -31,6 +31,7 @@ const coreEmbed = {
 
 module.exports = {
     archiveRaid(message) {
+        message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         message.unpin();
         fs.unlink(`${dbFolderPath}/${message.id}`, (err) => {
             if (err) throw err;
@@ -48,6 +49,7 @@ module.exports = {
         if (alertDate > Date.now()) {
             setTimeout(() => {
                 let members = message.reactions.resolve('✅').users.cache.array().slice(1);
+                //TODO cache members with ❓ aswell
                 members.push(rLeader);
                 forEach(members, member => {
                     console.log("sending message to raid member " + member.username);
@@ -66,9 +68,6 @@ module.exports = {
                     let waiting = msgStandin.map((user) => {
                         return `${index++}. <@${user.id}>`;
                     });
-                    for (; index < 7; index++) {
-                        waiting.push(`${index}.`);
-                    }
                     let msgEmbed = {};
                     msgEmbed.title = "Raid is about to start - " + message.embeds[0].title;
                     msgEmbed.description = message.embeds[0].description;
