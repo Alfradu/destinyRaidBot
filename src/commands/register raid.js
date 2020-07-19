@@ -102,9 +102,8 @@ module.exports = {
             members: messageFile.members
         });
         let members = messageFile.members.filter(m => m.team == 0);
-        let index;
+        let index = 1;
         let confirmed = members.map(member => {
-            index = 1;
             return `${index++}. <@${member.userID}>`;
         });
         for (; index < 7; index++) {
