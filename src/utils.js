@@ -25,9 +25,10 @@ const coreEmbed = {
         },
     ],
     footer: {
-        text: `A reminder will be sent out 15 minutes before raid start to all fireteam members.
-        Press the checkmark below to sign up for the raid.
-        Press the questionmark below to sign up as a standin for the raid.`
+        text: 
+`A reminder will be sent out 15 minutes before raid start to all fireteam members.
+Press the checkmark below to sign up for the raid.
+Press the questionmark below to sign up as a standin for the raid.`
     },
 };
 

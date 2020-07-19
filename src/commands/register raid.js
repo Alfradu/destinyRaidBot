@@ -104,8 +104,8 @@ module.exports = {
         let members = messageFile.members.filter(m => m.team == 0);
         let index;
         let confirmed = members.map(member => {
-            index = member.id + 2;
-            return `${member.id + 1}. <@${member.userID}>`;
+            index = 1;
+            return `${index++}. <@${member.userID}>`;
         });
         for (; index < 7; index++) {
             confirmed.push(`${index}.`);
