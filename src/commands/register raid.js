@@ -45,11 +45,7 @@ module.exports = {
             await message.react(reacts[0]);
             await message.react(reacts[1]);
             await message.react(reacts[2]);
-            try {
-                message.pin();
-            } catch (error) {
-                console.log(error);
-            }  
+            message.pin();
             utils.writeFile(message.id, {
                 leader: raidLeader.id,
                 date: startDate,
