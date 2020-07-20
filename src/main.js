@@ -42,7 +42,7 @@ client.on('ready', async () => {
             await message.reactions.resolve('✅').users.fetch();
             await message.reactions.resolve('❓').users.fetch();
             let currentFile = utils.readFile(fileName);
-            utils.activateRaid(message, currentFile.leader, Date.parse(currentFile.date));
+            utils.activateRaid(message, Date.parse(currentFile.date));
         }
     });
     console.log('*** destiny raid bot ready ***');

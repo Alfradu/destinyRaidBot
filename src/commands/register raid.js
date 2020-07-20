@@ -1,16 +1,6 @@
 const fs = require('fs');
 const utils = require('../utils.js');
-const reacts = ['✅', '❓', '❎'];
-const raids = {
-    "vog": "Vault of Glass",
-    "gos": "Garden of Salvation",
-    "sotp": "Scourge of the Past",
-    "lw": "Last Wish",
-    "levi": "Leviathan",
-    "cos": "Crown of Sorrow",
-    "eow": "Eater of Worlds",
-    "sos": "Spire of Stars"
-};
+const { debug } = require('console');
 
 module.exports = {
     name: 'raid',
@@ -23,9 +13,9 @@ module.exports = {
     execute(message, args) {
         let msgEmbed = {};
         //raid name: VoG GoS SotP LW Levi CoS EoW SoS DSC
-        if (!raids[args[0].toLowerCase()]) return; //TODO change return
+        if (!utils.raids[args[0].toLowerCase()]) return; //TODO change return
         const info = args.splice(3).join(" ");
-        msgEmbed.title = raids[args[0].toLowerCase()] + ". " + info;
+        msgEmbed.title = utils.raids[args[0].toLowerCase()][0] + ". " + info;
         let timePart = args[2].split(':');
         if (!args[1] || !timePart[0] || !timePart[1]) return; //TODO change return
         let date = new Date();
@@ -38,13 +28,13 @@ module.exports = {
         message.channel.send({
             embed: msg,
             files: [{
-                attachment: './src/images/raid.jpg',
+                attachment: './src/images/'+utils.raids[args[0].toLowerCase()][1],
                 name: "raid.jpg"
             }]
         }).then(async message => {
-            await message.react(reacts[0]);
-            await message.react(reacts[1]);
-            await message.react(reacts[2]);
+            await message.react(utils.reacts[0]);
+            await message.react(utils.reacts[1]);
+            await message.react(utils.reacts[2]);
             message.pin();
             utils.writeFile(message.id, {
                 leader: raidLeader.id,
@@ -57,20 +47,20 @@ module.exports = {
                     team: 0
                 }]
             });
-            utils.activateRaid(message, raidLeader, startDate);
+            utils.activateRaid(message, startDate);
         });
     },
     reacted(message, reactUser) {
         console.log(reactUser.username + " adding react from message " + message.message.id);
         if (reactUser.bot) return;
         if (!utils.messageExists(message.message.id)) return;
-        if (!reacts.includes(message._emoji.name)) return;
+        if (!utils.reacts.includes(message._emoji.name)) return;
         let messageFile = utils.readFile(message.message.id);
         if (reactUser.id == messageFile.leader) return;
         let users = messageFile.members;
         console.log(users.filter(m => m.userID === reactUser.id).length);
         if (users.filter(m => m.userID === reactUser.id).length > 0) {
-            let otherReacts = reacts.filter(r => r !== message._emoji.name);
+            let otherReacts = utils.reacts.filter(r => r !== message._emoji.name);
             console.log(otherReacts);
             messageFile.members = messageFile.members.filter(m => m.userID !== reactUser.id);
             otherReacts.forEach(r => {
@@ -82,14 +72,14 @@ module.exports = {
         newMember.id = users.length;
         newMember.userID = reactUser.id;
         switch (message._emoji.name) {
-            case reacts[0]:
+            case utils.reacts[0]:
                 let members = users.filter(m => m.team == 0);
                 newMember.team = members.length > 5 ? 1 : 0;
                 break;
-            case reacts[1]:
+            case utils.reacts[1]:
                 newMember.team = 1;
                 break;
-            case reacts[2]:
+            case utils.reacts[2]:
                 newMember.team = 2;
                 break;
         }
@@ -127,10 +117,10 @@ module.exports = {
         console.log(reactUser.username + " removing react from message " + message.message.id);
         if (reactUser.bot) return;
         if (!utils.messageExists(message.message.id)) return;
-        if (!reacts.includes(message._emoji.name)) return;
+        if (!utils.reacts.includes(message._emoji.name)) return;
         let messageFile = utils.readFile(message.message.id);
         if (reactUser.id == messageFile.leader) return;
-        let otherReacts = reacts.filter(r => r !== message._emoji.name);
+        let otherReacts = utils.reacts.filter(r => r !== message._emoji.name);
         let exit = false;
         otherReacts.forEach(r => {
             if(message.message.reactions.resolve(r).users.cache.array().filter(u => u.id === reactUser.id).length > 0){

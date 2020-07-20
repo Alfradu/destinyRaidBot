@@ -2,7 +2,17 @@ const cloneDeep = require('lodash/fp/cloneDeep');
 const fs = require('fs');
 const path = require('path');
 const { forEach } = require('lodash');
-
+const raids = {
+    "vog": ["Vault of Glass", "raid.jpg"],
+    "gos": ["Garden of Salvation", "gos.png"],
+    "sotp": ["Scourge of the Past", "sotp.png"],
+    "lw": ["Last Wish", "dream.png"],
+    "levi": ["Leviathan", "levi.png"],
+    "cos": ["Crown of Sorrow", "levi.png"],
+    "eow": ["Eater of Worlds", "levi.png"],
+    "sos": ["Spire of Stars", "levi.png"]
+};
+const reacts = ['✅', '❓', '❎'];
 const dbFolderPath = path.join(__dirname, '_db');
 
 const coreEmbed = {
@@ -25,14 +35,16 @@ const coreEmbed = {
         },
     ],
     footer: {
-        text: 
-`A reminder will be sent out 15 minutes before raid start to all fireteam members.
+        text:
+            `A reminder will be sent out 15 minutes before raid start to all fireteam members.
 Press the checkmark below to sign up for the raid.
 Press the questionmark below to sign up as a standin for the raid.`
     },
 };
 
 module.exports = {
+    raids: raids,
+    reacts: reacts,
     archiveRaid(message) {
         message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         message.unpin();
@@ -47,44 +59,40 @@ module.exports = {
             console.log('archived message and deleted local log ' + message.id);
         });
     },
-    activateRaid(message, rLeader, startDate) {
+    activateRaid(message, startDate) {
         const alertDate = new Date(startDate - new Date(900000));
         if (alertDate > Date.now()) {
             setTimeout(() => {
-                let members = message.reactions.resolve('✅').users.cache.array().slice(1);
-                //TODO cache members with ❓ aswell
-                members.push(rLeader);
+                let messageFile = module.exports.readFile(message.id);
+                let members = messageFile.members.filter(m => m.team == 0);
+                let index = 1;
+                let confirmed = members.map(member => {
+                    return `${index++}. <@${member.userID}>`;
+                });
+                for (; index < 7; index++) {
+                    confirmed.push(`${index}.`);
+                }
+                let standin = messageFile.members.filter(m => m.team == 1);
+                index = 1;
+                let waiting = standin.map(member => {
+                    return `${index++}. <@${member.userID}>`;
+                });
+                let msgEmbed = {};
+                msgEmbed.title = "Raid is about to start - " + messageFile.raid;
+                msgEmbed.description = message.embeds[0].description;
+                msgEmbed.members = `${confirmed.join('\n')}`;
+                msgEmbed.image = message.embeds[0].thumbnail.url;
+                msgEmbed.thumbnail = {};
+                msgEmbed.thumbnail.url = 'attachment://raid.jpg';
+                if (waiting.length > 0) msgEmbed.standins = `${waiting.join('\n')}`;
+                msgEmbed.color = 0x7978c7;
+                msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
+                let msg = module.exports.createMessage(msgEmbed);
                 forEach(members, member => {
-                    console.log("sending message to raid member " + member.username);
-                    const leader = message.embeds[0].fields[0].value.split('\n')[0];
-                    const users = members.filter(user => "1. " + user.username !== leader);
-                    const msgMembers = users.splice(1, 6);
-                    const msgStandin = users.splice(7);
-                    let index = 2;
-                    let confirmed = msgMembers.map((user) => {
-                        return `${index++}. <@${user.id}>`;
-                    });
-                    for (; index < 7; index++) {
-                        confirmed.push(`${index}.`);
-                    }
-                    index = 1;
-                    let waiting = msgStandin.map((user) => {
-                        return `${index++}. <@${user.id}>`;
-                    });
-                    let msgEmbed = {};
-                    msgEmbed.title = "Raid is about to start - " + message.embeds[0].title;
-                    msgEmbed.description = message.embeds[0].description;
-                    msgEmbed.members = `${leader}\n${confirmed.join('\n')}`;
-                    msgEmbed.standins = `${waiting.join('\n')}`;
-                    msgEmbed.color = 0x7978c7;
-                    msgEmbed.footer = "This is a scheduled notice for a raid starting in 15 minutes.";
-                    let msg = module.exports.createMessage(msgEmbed);
-                    member.send({
-                        embed: msg,
-                        files: [{
-                            attachment: './src/images/raid.jpg',
-                            name: "raid.jpg"
-                        }]
+                    let user = message.channel.guild.members.cache.get(member.userID);
+                    console.log("sending message to raid member " + user.username);
+                    user.send({
+                        embed: msg
                     }).catch(err => console.log(err));
                 });
             }, alertDate - Date.now());
