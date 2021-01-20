@@ -48,7 +48,7 @@ module.exports = {
     archiveRaid(message) {
         message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         message.unpin();
-        fs.unlink(`${dbFolderPath}/${message.id}`, (err) => {
+        fs.unlink(`${dbFolderPath}/${message.channel.id}-${message.id}`, (err) => {
             if (err) throw err;
             let embeds = message.embeds[0];
             embeds.title = "Raid listing archived: " + embeds.title;
@@ -59,11 +59,13 @@ module.exports = {
             console.log('archived message and deleted local log ' + message.id);
         });
     },
+    //todo: change from timeout to check every minute
+    //todo: timezones?
     activateRaid(message, startDate) {
         const alertDate = new Date(startDate - new Date(900000));
         if (alertDate > Date.now()) {
             setTimeout(() => {
-                let messageFile = module.exports.readFile(message.id);
+                let messageFile = module.exports.readFile(message);
                 let members = messageFile.members.filter(m => m.team == 0);
                 let index = 1;
                 let confirmed = members.map(member => {
@@ -113,18 +115,18 @@ module.exports = {
         if (input.footer) cloneEmbed.footer.text = input.footer;
         return cloneEmbed;
     },
-    messageExists(id) {
-        return fs.existsSync(`${dbFolderPath}/${id}`);
+    messageExists(message) {
+        return fs.existsSync(`${dbFolderPath}/${message.channel.id}-${message.id}`);
     },
     //TODO handle with db
-    readFile(id) {
-        if (!fs.existsSync(`${dbFolderPath}/${id}`)) return;
-        let file = fs.readFileSync(`${dbFolderPath}/${id}`, 'utf8');
+    readFile(message) {
+        if (!fs.existsSync(`${dbFolderPath}/${message.channel.id}-${message.id}`)) return;
+        let file = fs.readFileSync(`${dbFolderPath}/${message.channel.id}-${message.id}`, 'utf8');
         return JSON.parse(file);
     },
     //TODO handle with db
-    writeFile(id, input) {
-        fs.writeFile(`${dbFolderPath}/${id}`, JSON.stringify(input), (err) => {
+    writeFile(message, input) {
+        fs.writeFile(`${dbFolderPath}/${message.channel.id}-${message.id}`, JSON.stringify(input), (err) => {
             if (err) throw err;
         });
     },

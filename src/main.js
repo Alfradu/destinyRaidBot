@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const utils = require('./utils.js');
 const Discord = require('discord.js');
-const { prefix, token, channel } = require('config.json');
+const { prefix, token } = require('config.json');
 const { forEach } = require('lodash');
 
 const cancelRaid = require('./commands/cancel raid');
@@ -25,6 +25,9 @@ client.commands.set(registerRaid.name, registerRaid);
 
 const dbFolderPath = path.join(__dirname, '_db');
 
+
+// new filename: <channelID>/<messageID>
+// old filename: <messageID>
 client.on('ready', async () => {
     await fs.mkdir(dbFolderPath, (err) => {
         if (err && err.code !== 'EEXIST') {
@@ -32,16 +35,17 @@ client.on('ready', async () => {
         }
     });
     const files = fs.readdirSync(dbFolderPath);
-    const ch = await client.channels.fetch(channel);
+    //const ch = await client.channels.fetch(channel);
     forEach(files, async (fileName) => {
-        const message = await ch.messages.fetch(fileName, true);
-        let dateCheck = Date.parse(utils.readFile(message.id).date) < Date.now();
+        let ch = await client.channels.fetch(fileName.split('-')[0]);
+        const message = await ch.messages.fetch(fileName.split('-')[1], true);
+        let dateCheck = Date.parse(utils.readFile(message).date) < Date.now();
         if (dateCheck) {
             utils.archiveRaid(message);
         } else {
             await message.reactions.resolve('✅').users.fetch();
             await message.reactions.resolve('❓').users.fetch();
-            let currentFile = utils.readFile(fileName);
+            let currentFile = utils.readFile(message);
             utils.activateRaid(message, Date.parse(currentFile.date));
         }
     });
@@ -78,7 +82,7 @@ client.on('messageReactionRemove', (message, user) => {
 
 client.on('message', message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
-    if (!channel) return message.reply('Please specify a channel for communicating with me.');
+    //if (!channel) return message.reply('Please specify a channel for communicating with me.');
     const args = message.content.slice(prefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();
 
@@ -87,7 +91,7 @@ client.on('message', message => {
     if (!command) return;
 
     //check if guildOnly: true
-    if (command.guildOnly && message.channel.id != channel) return;
+    //if (command.guildOnly && message.channel.id != channel) return;
 
     // check if admin or not
     // BE CAREFUL SO YOU ADD MODONLY ONLY WHERE YOU HAVE GUILDONLY TAGS

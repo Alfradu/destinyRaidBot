@@ -36,7 +36,7 @@ module.exports = {
             await message.react(utils.reacts[1]);
             await message.react(utils.reacts[2]);
             message.pin();
-            utils.writeFile(message.id, {
+            utils.writeFile(message, {
                 leader: raidLeader.id,
                 date: startDate,
                 comment: info,
@@ -53,9 +53,9 @@ module.exports = {
     reacted(message, reactUser) {
         console.log(reactUser.username + " adding react from message " + message.message.id);
         if (reactUser.bot) return;
-        if (!utils.messageExists(message.message.id)) return;
+        if (!utils.messageExists(message.message)) return;
         if (!utils.reacts.includes(message._emoji.name)) return;
-        let messageFile = utils.readFile(message.message.id);
+        let messageFile = utils.readFile(message.message);
         if (reactUser.id == messageFile.leader) return;
         let users = messageFile.members;
         console.log(users.filter(m => m.userID === reactUser.id).length);
@@ -84,7 +84,7 @@ module.exports = {
                 break;
         }
         messageFile.members.push(newMember);
-        utils.writeFile(message.message.id, {
+        utils.writeFile(message.message, {
             leader: messageFile.leader,
             date: messageFile.date,
             comment: messageFile.comment,
@@ -116,9 +116,9 @@ module.exports = {
     unreacted(message, reactUser) {
         console.log(reactUser.username + " removing react from message " + message.message.id);
         if (reactUser.bot) return;
-        if (!utils.messageExists(message.message.id)) return;
+        if (!utils.messageExists(message.message)) return;
         if (!utils.reacts.includes(message._emoji.name)) return;
-        let messageFile = utils.readFile(message.message.id);
+        let messageFile = utils.readFile(message.message);
         if (reactUser.id == messageFile.leader) return;
         let otherReacts = utils.reacts.filter(r => r !== message._emoji.name);
         let exit = false;
@@ -150,7 +150,7 @@ module.exports = {
         let msg = utils.createMessage(msgEmbed);
         message.message.edit({ embed: msg });
         if (exit) return;
-        utils.writeFile(message.message.id, {
+        utils.writeFile(message.message, {
             leader: messageFile.leader,
             date: messageFile.date,
             comment: messageFile.comment,
