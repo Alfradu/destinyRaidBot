@@ -10,7 +10,8 @@ const raids = {
     "levi": ["Leviathan", "levi.png"],
     "cos": ["Crown of Sorrow", "levi.png"],
     "eow": ["Eater of Worlds", "levi.png"],
-    "sos": ["Spire of Stars", "levi.png"]
+    "sos": ["Spire of Stars", "levi.png"],
+    "dsc": ["Deep Stone Crypt", "dsc.png"]
 };
 const reacts = ['✅', '❓', '❎'];
 const dbFolderPath = path.join(__dirname, '_db');
