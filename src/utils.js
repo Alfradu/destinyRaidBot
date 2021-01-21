@@ -131,6 +131,9 @@ module.exports = {
             if (err) throw err;
         });
     },
+    getFolderPath(){
+        return dbFolderPath;
+    },
     debug(input) {
         console.log("########################");
         console.log(input);
