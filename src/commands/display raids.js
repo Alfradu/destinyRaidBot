@@ -5,8 +5,8 @@ const foreach = async (data, files, message, raid) => {
     let c = 0;
     for (const fileName of files) {
         let fileIds = fileName.split('-');
-        let ch = message.channel.guild.channels.cache.get(fileIds[0]);
-        if (ch.guild.id == message.channel.guild.id) {
+        let ch = await message.channel.guild.channels.cache.get(fileIds[0]);
+        if (await ch.guild.id == message.channel.guild.id) {
             let file = utils.readFileName(fileName);
             if (file.raid == raid || !raid) {
                 let pos = '';
