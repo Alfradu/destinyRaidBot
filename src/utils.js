@@ -125,6 +125,11 @@ module.exports = {
         let file = fs.readFileSync(`${dbFolderPath}/${message.channel.id}-${message.id}`, 'utf8');
         return JSON.parse(file);
     },
+    readFileName(fileName) {
+        if (!fs.existsSync(`${dbFolderPath}/${fileName}`)) return;
+        let file = fs.readFileSync(`${dbFolderPath}/${fileName}`, 'utf8');
+        return JSON.parse(file);
+    },
     //TODO handle with db
     writeFile(message, input) {
         fs.writeFile(`${dbFolderPath}/${message.channel.id}-${message.id}`, JSON.stringify(input), (err) => {

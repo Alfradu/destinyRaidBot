@@ -1,12 +1,13 @@
 const utils = require('../utils.js');
+const { get } = require('lodash');
+
 const foreach = async (data, files, message, raid) => {
-    let c = 0
+    let c = 0;
     for (const fileName of files) {
         let fileIds = fileName.split('-');
-        let ch = await message.channel.guild.channels.cache.find(x => x.id == fileIds[0]);
+        let ch = message.channel.guild.channels.cache.get(fileIds[0]);
         if (ch.guild.id == message.channel.guild.id) {
-            let msg = await ch.messages.fetch(fileIds[1], true);
-            let file = utils.readFile(msg);
+            let file = utils.readFileName(fileName);
             if (file.raid == raid || !raid) {
                 let pos = '';
                 if (file.members.length < 5) {
@@ -20,6 +21,7 @@ const foreach = async (data, files, message, raid) => {
             }
         }
     }
+    console.log(`displaying ${c} raid listings`);
     if (c < 1){
         message.channel.send('Could not find any listings for that raid. Why not create one? \n *!raid <arg1 raid name> <arg2 time dd hh:mm> <arg3 additional info>*');
     } else {
