@@ -49,7 +49,7 @@ module.exports = {
     archiveRaid(message) {
         message.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
         message.unpin();
-        fs.unlink(`${dbFolderPath}/${message.channel.id}-${message.id}`, (err) => {
+        fs.unlink(`${dbFolderPath}/${message.channel.guild.id}-${message.channel.id}-${message.id}`, (err) => {
             if (err) throw err;
             let embeds = message.embeds[0];
             embeds.title = "Raid listing archived: " + embeds.title;
@@ -117,12 +117,12 @@ module.exports = {
         return cloneEmbed;
     },
     messageExists(message) {
-        return fs.existsSync(`${dbFolderPath}/${message.channel.id}-${message.id}`);
+        return fs.existsSync(`${dbFolderPath}/${message.channel.guild.id}-${message.channel.id}-${message.id}`);
     },
     //TODO handle with db
     readFile(message) {
-        if (!fs.existsSync(`${dbFolderPath}/${message.channel.id}-${message.id}`)) return;
-        let file = fs.readFileSync(`${dbFolderPath}/${message.channel.id}-${message.id}`, 'utf8');
+        if (!fs.existsSync(`${dbFolderPath}/${message.channel.guild.id}-${message.channel.id}-${message.id}`)) return;
+        let file = fs.readFileSync(`${dbFolderPath}/${message.channel.guild.id}-${message.channel.id}-${message.id}`, 'utf8');
         return JSON.parse(file);
     },
     readFileName(fileName) {
@@ -132,7 +132,7 @@ module.exports = {
     },
     //TODO handle with db
     writeFile(message, input) {
-        fs.writeFile(`${dbFolderPath}/${message.channel.id}-${message.id}`, JSON.stringify(input), (err) => {
+        fs.writeFile(`${dbFolderPath}/${message.channel.guild.id}-${message.channel.id}-${message.id}`, JSON.stringify(input), (err) => {
             if (err) throw err;
         });
     },

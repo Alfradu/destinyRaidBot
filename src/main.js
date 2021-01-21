@@ -33,8 +33,8 @@ client.on('ready', async () => {
     });
     const files = fs.readdirSync(dbFolderPath);
     forEach(files, async (fileName) => {
-        let ch = await client.channels.fetch(fileName.split('-')[0]);
-        const message = await ch.messages.fetch(fileName.split('-')[1], true);
+        let ch = await client.channels.fetch(fileName.split('-')[1]);
+        const message = await ch.messages.fetch(fileName.split('-')[2], true);
         let dateCheck = Date.parse(utils.readFile(message).date) < Date.now();
         if (dateCheck) {
             utils.archiveRaid(message);
