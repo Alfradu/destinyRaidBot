@@ -25,9 +25,6 @@ client.commands.set(registerRaid.name, registerRaid);
 
 const dbFolderPath = path.join(__dirname, '_db');
 
-
-// new filename: <channelID>/<messageID>
-// old filename: <messageID>
 client.on('ready', async () => {
     await fs.mkdir(dbFolderPath, (err) => {
         if (err && err.code !== 'EEXIST') {
@@ -35,7 +32,6 @@ client.on('ready', async () => {
         }
     });
     const files = fs.readdirSync(dbFolderPath);
-    //const ch = await client.channels.fetch(channel);
     forEach(files, async (fileName) => {
         let ch = await client.channels.fetch(fileName.split('-')[0]);
         const message = await ch.messages.fetch(fileName.split('-')[1], true);

@@ -3,15 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const { forEach } = require('lodash');
 const raids = {
-    "vog": ["Vault of Glass", "raid.jpg"],
-    "gos": ["Garden of Salvation", "gos.png"],
+    "vog" : ["Vault of Glass", "raid.jpg"],
+    "gos" : ["Garden of Salvation", "gos.png"],
     "sotp": ["Scourge of the Past", "sotp.png"],
-    "lw": ["Last Wish", "dream.png"],
+    "lw"  : ["Last Wish", "dream.png"],
     "levi": ["Leviathan", "levi.png"],
-    "cos": ["Crown of Sorrow", "levi.png"],
-    "eow": ["Eater of Worlds", "levi.png"],
-    "sos": ["Spire of Stars", "levi.png"],
-    "dsc": ["Deep Stone Crypt", "dsc.png"]
+    "cos" : ["Crown of Sorrow", "levi.png"],
+    "eow" : ["Eater of Worlds", "levi.png"],
+    "sos" : ["Spire of Stars", "levi.png"],
+    "dsc" : ["Deep Stone Crypt", "dsc.png"]
 };
 const reacts = ['✅', '❓', '❎'];
 const dbFolderPath = path.join(__dirname, '_db');
@@ -131,8 +131,8 @@ module.exports = {
             if (err) throw err;
         });
     },
-    getFolderPath(){
-        return dbFolderPath;
+    getAllFiles(){
+        return fs.readdirSync(dbFolderPath);;
     },
     debug(input) {
         console.log("########################");

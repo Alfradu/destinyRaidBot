@@ -1,7 +1,7 @@
 module.exports = {
-    name: 'display',
+    name: 'e',
     description: 'List all of my commands or info about a specific command.',
-    aliases: ['disp', 'raiddisp'],
+    aliases: ['edit'],
     usage: '<optional arg1 user mention>',
     cooldown: 1,
     execute(message, args) {
