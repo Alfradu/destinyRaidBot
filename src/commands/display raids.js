@@ -33,6 +33,7 @@ module.exports = {
     description: 'List all active raid listings for this channel.',
     aliases: ['disp', 'raiddisp', 'd'],
     usage: '<optional arg1 raid>',
+    guildOnly: true,
     cooldown: 1,
     execute(message, args) {
         const data = [];

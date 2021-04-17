@@ -1,7 +1,7 @@
 module.exports = {
-    name: 'e',
+    name: 'edit',
     description: 'List all of my commands or info about a specific command.',
-    aliases: ['edit'],
+    aliases: ['e'],
     usage: '<optional arg1 user mention>',
     cooldown: 1,
     execute(message, args) {

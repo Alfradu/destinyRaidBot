@@ -1,7 +1,7 @@
 module.exports = {
-    name: 'c',
+    name: 'cancel',
     description: 'List all of my commands or info about a specific command.',
-    aliases: ['cancel'],
+    aliases: ['c'],
     usage: '<optional arg1 user mention>',
     cooldown: 1,
     execute(message, args) {

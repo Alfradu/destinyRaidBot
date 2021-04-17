@@ -15,7 +15,9 @@
     "all": "0.0.0",
     "dependencies": "0.0.1",
     "discord.js": "^12.2.0",
-    "lodash": "^4.17.19"
+    "lodash": "^4.17.19",
+    "mongodb": "^3.6.3",
+    "mongoose": "^5.11.14"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^14.0.0",

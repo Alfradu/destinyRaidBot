@@ -1,21 +1,15 @@
-const fs = require('fs');
-const path = require('path');
-const utils = require('./utils.js');
+const service = require('./service.js');
 const Discord = require('discord.js');
 const { prefix, token } = require('config.json');
-const { forEach } = require('lodash');
-
-const cancelRaid = require('./commands/cancel raid');
-const commands = require('./commands/commands');
-const displayRaids = require('./commands/display raids');
-const editRaid = require('./commands/edit raid');
-const registerRaid = require('./commands/register raid');
-
 const client = new Discord.Client({ autoReconnect: true });
 client.commands = new Discord.Collection();
-const cooldowns = new Discord.Collection();
+const lastExecutedCommands = new Discord.Collection();
 
-var currentTitle = '';
+const cancelRaid = require('./commands/cancel raid.js');
+const commands = require('./commands/commands.js');
+const displayRaids = require('./commands/display raids.js');
+const editRaid = require('./commands/edit raid.js');
+const registerRaid = require('./commands/register raid.js');
 
 client.commands.set(cancelRaid.name, cancelRaid);
 client.commands.set(commands.name, commands);
@@ -23,28 +17,10 @@ client.commands.set(displayRaids.name, displayRaids);
 client.commands.set(editRaid.name, editRaid);
 client.commands.set(registerRaid.name, registerRaid);
 
-const dbFolderPath = path.join(__dirname, '_db');
+var currentTitle = '';
 
 client.on('ready', async () => {
-    await fs.mkdir(dbFolderPath, (err) => {
-        if (err && err.code !== 'EEXIST') {
-            throw err;
-        }
-    });
-    const files = fs.readdirSync(dbFolderPath);
-    forEach(files, async (fileName) => {
-        let ch = await client.channels.fetch(fileName.split('-')[1]);
-        const message = await ch.messages.fetch(fileName.split('-')[2], true);
-        let dateCheck = Date.parse(utils.readFile(message).date) < Date.now();
-        if (dateCheck) {
-            utils.archiveRaid(message);
-        } else {
-            await message.reactions.resolve('✅').users.fetch();
-            await message.reactions.resolve('❓').users.fetch();
-            let currentFile = utils.readFile(message);
-            utils.activateRaid(message, Date.parse(currentFile.date));
-        }
-    });
+    service.startTimer();
     console.log('*** destiny raid bot ready ***');
 });
 
@@ -57,9 +33,8 @@ client.on('disconnected', () => {
 });
 
 client.on('messageReactionAdd', async (message, user) => {
-    const command = client.commands.get("raid");
     try {
-        command.reacted(message, user);
+        registerRaid.reacted(message, user); //todo move react from register raid
     }
     catch (error) {
         console.error(error);
@@ -67,9 +42,8 @@ client.on('messageReactionAdd', async (message, user) => {
 });
 
 client.on('messageReactionRemove', (message, user) => {
-    const command = client.commands.get("raid");
     try {
-        command.unreacted(message, user);
+        registerRaid.unreacted(message, user); //todo move react from register raid
     }
     catch (error) {
         console.error(error);
@@ -78,7 +52,6 @@ client.on('messageReactionRemove', (message, user) => {
 
 client.on('message', message => {
     if (!message.content.startsWith(prefix) || message.author.bot) return;
-    //if (!channel) return message.reply('Please specify a channel for communicating with me.');
     const args = message.content.slice(prefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();
 
@@ -87,7 +60,7 @@ client.on('message', message => {
     if (!command) return;
 
     //check if guildOnly: true
-    //if (command.guildOnly && message.channel.id != channel) return;
+    if (command.guildOnly && message.channel.type === 'dm') return;
 
     // check if admin or not
     // BE CAREFUL SO YOU ADD MODONLY ONLY WHERE YOU HAVE GUILDONLY TAGS
@@ -104,12 +77,13 @@ client.on('message', message => {
         }
         return message.channel.send(reply);
     }
+
     // check cooldowns
-    if (!cooldowns.has(command.name)) {
-        cooldowns.set(command.name, new Discord.Collection());
+    if (!lastExecutedCommands.has(command.name)) {
+        lastExecutedCommands.set(command.name, new Discord.Collection());
     }
     const now = Date.now();
-    const timestamps = cooldowns.get(command.name);
+    const timestamps = lastExecutedCommands.get(command.name);
     const cooldownAmount = (command.cooldown || 3) * 1000;
     if (!timestamps.has(message.author.id)) {
         timestamps.set(message.author.id, now);
