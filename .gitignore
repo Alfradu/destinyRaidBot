@@ -42,6 +42,6 @@ config.json
 .eslintrc.json
 .vsls.json
 node_modules/
-_db/
 dist/
 .github/
+src/db
