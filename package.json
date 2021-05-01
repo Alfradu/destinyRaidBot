@@ -6,11 +6,8 @@
   "scripts": {
     "start": "cross-env NODE_PATH=./src node ./src/main.js",
     "test": "mocha",
-    "build": "rollup --file dist/app"
+    "build": "rollup -c && xcopy src\\images dist\\images /i /y"
   },
-  "files": [
-    "dist/"
-  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
