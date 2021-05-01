@@ -1,13 +1,16 @@
 {
-  "name": "destiny-raid-help",
+  "name": "destiny-raid-bot",
   "version": "1.0.0",
   "description": "",
   "main": "./src/main.js",
   "scripts": {
     "start": "cross-env NODE_PATH=./src node ./src/main.js",
     "test": "mocha",
-    "build": "rollup -c && xcopy src\\images dist\\images /i /y"
+    "build": "rollup --file dist/app"
   },
+  "files": [
+    "dist/"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
