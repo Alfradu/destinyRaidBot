@@ -1,36 +1,30 @@
 const mongoose = require('mongoose');
+const utils = require('./utils.js');
+const { uri } = require('config.json');
 const { createRaidModel, RaidModel } = require('./raidSchema.js');
 
-const uri = "mongodb://localhost:27017/raiddb";
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () { console.log('*** connected to db ***'); });
+db.on('error', console.error.bind(console, 'db connection error:'));
+db.once('open', function () { utils.debug('Connected to db'); });
 
 async function createRaid(raid) {
-    const raidModel = createRaidModel(raid);
-    const raidSuccess = await raidModel.save();
-    return raidSuccess;
+    return await createRaidModel(raid).save();
 }
-async function updateRaid(id, update) {
-    var raidSuccess = await RaidModel.findOneAndUpdate({ id: id }, update, { new: true });
-    return raidSuccess;
+async function updateRaid(update) {
+    return await update.save();
 }
 async function deleteRaid(id) {
-    var raidSuccess = await RaidModel.findOneAndRemove({ id: id });
-    return raidSuccess;
+    return await RaidModel.findOneAndRemove({ id: id });
 }
 async function getRaidFromId(id) {
-    var raidSuccess = await RaidModel.find({ id: id });
-    return raidSuccess;
+    return await RaidModel.findOne({ id: id });
 }
 async function getPastRaids() {
-    var raidSuccess = await RaidModel.find({ date: { $lt: Date.now() } });
-    return raidSuccess;
+    return await RaidModel.find({ date: { $lt: Date.now() } });
 }
 async function getReminderRaids() {
-    var raidSuccess = await RaidModel.find({ reminderdate: { $lt: Date.now(), $gt: Date.now() - 150000 } });
-    return raidSuccess;
+    return await RaidModel.find({ reminderdate: { $lte: Date.now() }, date: { $gte: Date.now() }, remind: true });
 }
 module.exports = {
     updateRaid,
@@ -39,4 +33,4 @@ module.exports = {
     getPastRaids,
     getReminderRaids,
     deleteRaid
-}; 
+};

@@ -44,4 +44,3 @@ config.json
 node_modules/
 dist/
 .github/
-src/db

@@ -3,156 +3,191 @@ const { Raid } = require('../Raid.js');
 const db = require('../db.js');
 
 function execute(message, args) {
-    let msgEmbed = {};
-    //raid name: VoG GoS SotP LW Levi CoS EoW SoS DSC
-    if (!utils.raids[args[0].toLowerCase()]) return; //TODO change return
-    const info = args.splice(3).join(" ");
-    msgEmbed.title = utils.raids[args[0].toLowerCase()][0] + ". " + info;
-    let timePart = args[2].split(':');
-    if (!args[1] || !timePart[0] || !timePart[1]) return; //TODO change return
+    //args: 0 : raid, 
+    //      1 : date (day@hour:minutes+timezone)
+    //      2 : class (T/W/H/F)
+    //      3+: info
+    //TODO: parse args correctly, divide them by "-" 
+    let raidAbbr = args[0].toLowerCase();
+    if (!utils.raids[raidAbbr]) return; //TODO change return
+
+    let timePart = args[1].split(/[@,:]+/g);
+    if (!timePart[0] || !timePart[1] || !timePart[2]) return; //TODO change return
     let date = new Date();
-    const startDate = new Date(date.getFullYear(), date.getMonth(), args[1], timePart[0], timePart[1], 0, 0);
+    const startDate = new Date(date.getFullYear(), date.getMonth(), timePart[0], timePart[1], timePart[2], 0, 0);
     if (startDate < Date.now()) return; //TODO change return
-    msgEmbed.description = "Starting on: " + startDate.toString(); //TODO fix timezones
+
+    let optionalClass = args[2];
+    let infoArgNr = 2;
+    if (optionalClass.length == 1) {
+        if (!/^[T,W,H,F]$/i.test(optionalClass)) return; //TODO change return
+        infoArgNr = 3;
+        optionalClass = optionalClass.toLowerCase();
+    } else {
+        optionalClass = 'f';
+    }
+
+    let msgEmbed = {};
+    const info = args.splice(infoArgNr).join(" ");
+    msgEmbed.title = utils.raids[raidAbbr][0] + ". " + info;
+    msgEmbed.description = "Starting on: " + startDate.toUTCString();
     const raidLeader = message.author;
-    msgEmbed.members = "1. <@" + raidLeader.id + ">\n2.\n3.\n4.\n5.\n6.";
+    utils.debug('Creating new raid listing for ' + raidLeader.username);
+    msgEmbed.members = utils.reacts[optionalClass] + " <@" + raidLeader.id + ">\n2. \n3. \n4. \n5. \n6. ";
+    msgEmbed.date = startDate;
     let msg = utils.createMessage(msgEmbed);
     message.channel.send({
         embed: msg,
         files: [{
-            attachment: './src/images/' + utils.raids[args[0].toLowerCase()][1],
+            attachment: './src/images/' + utils.raids[raidAbbr][1],
             name: "raid.jpg"
         }]
     }).then(async message => {
-        await message.react(utils.reacts[0]);
-        await message.react(utils.reacts[1]);
-        await message.react(utils.reacts[2]);
-        message.pin().catch(error => console.error('Failed to pin message'));
+        await message.react(utils.reacts.w);
+        await message.react(utils.reacts.h);
+        await message.react(utils.reacts.t);
+        await message.react(utils.reacts.f);
+        await message.react(utils.reacts['?']);
+
+        message.pin().catch(error => console.error('Failed to pin message', error));
+        var raid = new Raid(
+            message.id,
+            message.channel.guild.id,
+            message.channel.id,
+            raidLeader.id,
+            startDate,
+            startDate - 900000,
+            info,
+            raidAbbr,
+            {
+                id: 0,
+                userId: raidLeader.id,
+                team: utils.teams.MEMBERS,
+                role: optionalClass
+            });
+        db.createRaid(raid);
     });
-    var raid = new Raid(
-        message.id,
-        message.channel.guild.id,
-        message.channel.id,
-        raidLeader.id,
-        startDate,
-        startDate - 1500000,
-        info,
-        args[0].toLowerCase(),
-        {
-            id: 0,
-            userID: raidLeader.id,
-            team: 0
-        });
-    db.createRaid(raid);
 }
-function reacted(message, reactUser) {
+async function reacted(reaction, message, reactUser) {
     if (reactUser.bot) return;
-    console.log(reactUser.username + " adding react from message " + message.message.id);
-    if (!utils.messageExists(message.message)) return;
-    if (!utils.reacts.includes(message._emoji.name)) return;
-    let messageFile = utils.readFile(message.message);
-    if (reactUser.id == messageFile.leader) return;
-    let users = messageFile.members;
-    console.log(users.filter(m => m.userID === reactUser.id).length);
-    if (users.filter(m => m.userID === reactUser.id).length > 0) {
-        let otherReacts = utils.reacts.filter(r => r !== message._emoji.name);
-        console.log(otherReacts);
-        messageFile.members = messageFile.members.filter(m => m.userID !== reactUser.id);
-        otherReacts.forEach(r => {
-            console.log("removing reaction :: " + r + " :: " + reactUser.id);
-            message.message.reactions.resolve(r).users.remove(reactUser.id);
-        });
+    if (Object.values(utils.reacts).find(v => v === reaction) === undefined) return;
+    let id = reactUser.id;
+    let role = Object.keys(utils.reacts).find(key => utils.reacts[key] === reaction);
+    utils.debug(id + " adding react on message " + message.id);
+    let messageObject = await db.getRaidFromId(message.id);
+    utils.debug(messageObject.members[0].role);
+    let users = messageObject.members;
+    if (id != messageObject.leader) {
+        let t;
+        if (users.filter(m => m.userId == id).length > 0) {
+            let position = users.indexOf(users.find(m => m.userId == id));
+            messageObject.members[position].role = role;
+            if (users[position].team == utils.teams.MEMBERS) {
+                t = reaction == utils.reacts['?'] ? utils.teams.STANDINS : utils.teams.MEMBERS;
+                messageObject.members[position].team = t;
+            } else {
+                t = users.filter(m => m.team === utils.teams.MEMBERS).length > 5 ? utils.teams.STANDINS : utils.teams.MEMBERS;
+                messageObject.members[position].team = t;
+                let maxVal = 0;
+                for (let i = 0; i < users.length; i++) {
+                    if (users[i].id > maxVal) maxVal = users[i].id;
+                }
+                messageObject.members[position].id = maxVal + 1;
+            }
+        } else {
+            if (reaction != utils.reacts['?']) {
+                t = users.filter(m => m.team === utils.teams.MEMBERS).length > 5 ? utils.teams.STANDINS : utils.teams.MEMBERS;
+            } else {
+                t = utils.teams.STANDINS;
+            }
+            let newMember = {};
+            newMember.userId = id;
+            newMember.role = role;
+            newMember.team = t;
+            let maxVal = 0;
+            for (let i = 0; i < users.length; i++) {
+                if (users[i].id > maxVal) maxVal = users[i].id;
+            }
+            newMember.id = maxVal + 1;
+            messageObject.members.push(newMember);
+        }
+        db.updateRaid(messageObject);
+    } else if (id == messageObject.leader && reaction == utils.reacts['?']) {
+        message.reactions.resolve(utils.reacts['?']).users.remove(id);
+        return;
+    } else {
+        let position = users.indexOf(users.find(m => m.userId == id));
+        messageObject.members[position].role = role;
+        db.updateRaid(messageObject);
     }
-    let newMember = {};
-    newMember.id = users.length;
-    newMember.userID = reactUser.id;
-    switch (message._emoji.name) {
-        case utils.reacts[0]:
-            let members = users.filter(m => m.team == 0);
-            newMember.team = members.length > 5 ? 1 : 0;
-            break;
-        case utils.reacts[1]:
-            newMember.team = 1;
-            break;
-        case utils.reacts[2]:
-            newMember.team = 2;
-            break;
-    }
-    messageFile.members.push(newMember);
-    utils.writeFile(message.message, {
-        leader: messageFile.leader,
-        date: messageFile.date,
-        reminderdate: messageFile.date - 15 * 60000,
-        comment: messageFile.comment,
-        raid: messageFile.raid,
-        members: messageFile.members
-    });
-    let members = messageFile.members.filter(m => m.team == 0);
+    let members = messageObject.members.filter(m => m.team === utils.teams.MEMBERS);
+    members.sort((a, b) => a.id - b.id);
+    let standin = messageObject.members.filter(m => m.team === utils.teams.STANDINS);
+    standin.sort((a, b) => a.id - b.id);
     let index = 1;
     let confirmed = members.map(member => {
-        return `${index++}. <@${member.userID}>`;
+        index++;
+        return `${utils.reacts[member.role]} <@${member.userId}>`;
     });
     for (; index < 7; index++) {
         confirmed.push(`${index}.`);
     }
-    let standin = messageFile.members.filter(m => m.team == 1);
-    index = 1;
     let waiting = standin.map(member => {
-        return `${index++}. <@${member.userID}>`;
+        return `${utils.reacts[member.role]} <@${member.userId}>`;
     });
-
     let msgEmbed = {};
     msgEmbed.members = `${confirmed.join('\n')}`;
     if (waiting.length > 0) msgEmbed.standins = `${waiting.join('\n')}`;
-    msgEmbed.title = message.message.embeds[0].title;
-    msgEmbed.description = message.message.embeds[0].description;
+    msgEmbed.title = message.embeds[0].title;
+    msgEmbed.description = message.embeds[0].description;
     let msg = utils.createMessage(msgEmbed);
-    message.message.edit({ embed: msg });
+    message.edit({ embed: msg });
 }
-function unreacted(message, reactUser) {
+async function unreacted(reaction, message, reactUser) {
     if (reactUser.bot) return;
-    console.log(reactUser.username + " removing react from message " + message.message.id);
-    if (!utils.messageExists(message.message)) return;
-    if (!utils.reacts.includes(message._emoji.name)) return;
-    let messageFile = utils.readFile(message.message);
-    if (reactUser.id == messageFile.leader) return;
-    let otherReacts = utils.reacts.filter(r => r !== message._emoji.name);
-    let exit = false;
-    otherReacts.forEach(r => {
-        if (message.message.reactions.resolve(r).users.cache.array().filter(u => u.id === reactUser.id).length > 0) {
-            exit = true;
+    if (Object.values(utils.reacts).find(v => v === reaction) === undefined) return;
+    let id = reactUser.id;
+    utils.debug(id + " removing react on message " + message.id);
+    let messageObject = await db.getRaidFromId(message.id);
+    if (id == messageObject.leader) return;
+    let role = Object.keys(utils.reacts).find(key => utils.reacts[key] === reaction);
+    let users = messageObject.members;
+    let position = users.indexOf(users.find(m => m.userId == id));
+    if (position == -1) return;
+    if (role != users[position].role) return;
+    messageObject.members.splice(position, 1);
+    users = messageObject.members;
+    if (users.filter(m => m.team === utils.teams.MEMBERS).length < 6 && users.filter(m => m.team === utils.teams.STANDINS && m.role != '?').length > 0) {
+        console.log(users.filter(m => m.team === utils.teams.STANDINS && m.role != '?').sort((a, b) => a.id - b.id)[0]);
+        let standinPosition = users.indexOf(users.filter(m => m.team === utils.teams.STANDINS && m.role != '?').sort((a, b) => a.id - b.id)[0]);
+        console.log(standinPosition);
+        if (standinPosition != -1) {
+            messageObject.members[standinPosition].team = utils.teams.MEMBERS;
         }
-    });
-    let newMembers = messageFile.members.filter(m => m.userID !== reactUser.id);
-    let members = exit ? messageFile.members.filter(m => m.team == 0) : newMembers.filter(m => m.team == 0);
+    }
+    db.updateRaid(messageObject);
+    let members = messageObject.members.filter(m => m.team === utils.teams.MEMBERS);
+    members.sort((a, b) => a.id - b.id);
+    let standin = messageObject.members.filter(m => m.team === utils.teams.STANDINS);
+    standin.sort((a, b) => a.id - b.id);
     let index = 1;
     let confirmed = members.map(member => {
-        return `${index++}. <@${member.userID}>`;
+        index++;
+        return `${utils.reacts[member.role]} <@${member.userId}>`;
     });
     for (; index < 7; index++) {
         confirmed.push(`${index}.`);
     }
-    let standin = exit ? messageFile.members.filter(m => m.team == 1) : newMembers.filter(m => m.team == 1);
-    index = 1;
     let waiting = standin.map(member => {
-        return `${index++}. <@${member.userID}>`;
+        return `${utils.reacts[member.role]} <@${member.userId}>`;
     });
-
     let msgEmbed = {};
     msgEmbed.members = `${confirmed.join('\n')}`;
-    msgEmbed.standins = `${waiting.join('\n')}`;
-    msgEmbed.title = message.message.embeds[0].title;
-    msgEmbed.description = message.message.embeds[0].description;
+    if (waiting.length > 0) msgEmbed.standins = `${waiting.join('\n')}`;
+    msgEmbed.title = message.embeds[0].title;
+    msgEmbed.description = message.embeds[0].description;
     let msg = utils.createMessage(msgEmbed);
-    message.message.edit({ embed: msg });
-    if (exit) return;
-    utils.writeFile(message.message, {
-        leader: messageFile.leader,
-        date: messageFile.date,
-        comment: messageFile.comment,
-        raid: messageFile.raid,
-        members: newMembers
-    });
+    message.edit({ embed: msg });
 }
 module.exports = {
     name: 'raid',
@@ -160,7 +195,7 @@ module.exports = {
     args: true,
     guildOnly: true,
     description: 'Create a listing for a raid.',
-    usage: '<arg1 raid name> <arg2 time dd hh:mm> <arg3 additional info>',
+    usage: '<arg1 raid name> <arg2 time dd@hh:mm> <optional arg3 class (W/T/H/F)> <optional arg4 additional info>',
     cooldown: 1,
     execute,
     reacted,

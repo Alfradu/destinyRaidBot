@@ -8,7 +8,7 @@ const raidTemplate = {
     fields: [
         {
             name: 'Members',
-            value: '1. \n2. \n3. \n4. \n5. \n6.',
+            value: '',
             inline: true,
         },
         {
@@ -17,11 +17,10 @@ const raidTemplate = {
             inline: true,
         },
     ],
+    timestamp: new Date(),
     footer: {
         text:
-            `A reminder will be sent out 15 minutes before raid start to all fireteam members.
-Press the checkmark below to sign up for the raid.
-Press the questionmark below to sign up as a standin for the raid.`
+            `Press any of the reacts below to sign up for the raid.`
     },
 };
 const allRaidsTemplate = {

@@ -8,6 +8,7 @@ class Raid {
     comment;
     raid;
     active;
+    remind;
     members = new Array();
     constructor(id,
         guildid,
@@ -28,6 +29,7 @@ class Raid {
         this.raid = raid;
         this.members.push(members);
         this.active = true;
+        this.remind = true;
     };
     validateRaid() {
         return true;

@@ -5,15 +5,17 @@ const raidSchema = new mongoose.Schema({
   guildid: String,
   channelid: String,
   leader: String,
-  date: { type: Date, default: Date.now },
-  reminderdate: { type: Date, default: Date.now-150000 },
+  date: Date,
+  reminderdate: Date,
   comment: String,
   raid: String,
   active: Boolean,
+  remind: Boolean,
   members: [{
     id: Number,
     userId: String,
-    team: Number
+    team: Number,
+    role: String
 }]
 });
 const RaidModel = mongoose.model('Raid', raidSchema);
@@ -29,30 +31,14 @@ function createRaidModel(raid){
     comment: raid.comment,
     raid: raid.raid,
     active: raid.active,
+    remind: raid.remind,
     members: raid.members
   });
 
   return raidmodel;
 }
 
-function updateRaidModel(raidModel, raid){
-  var raidmodel = new RaidModel({
-    id: raid.id,
-    guildid: raid.guildid,
-    channelid: raid.channelid,
-    leader: raid.leader,
-    date: raid.date,
-    reminderdate: raid.reminderdate,
-    comment: raid.comment,
-    raid: raid.raid,
-    active: raid.active,
-    members: raid.members
-  });
-
-  return raidmodel;
-}
 module.exports = {
   createRaidModel,
-  updateRaidModel,
   RaidModel
 } 

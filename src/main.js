@@ -1,9 +1,11 @@
-const service = require('./service.js');
+const { Service } = require('./service.js');
 const Discord = require('discord.js');
+const utils = require('./utils.js');
 const { prefix, token } = require('config.json');
-const client = new Discord.Client({ autoReconnect: true });
+const client = new Discord.Client({ autoReconnect: true,  partials: ["USER", 'MESSAGE', 'CHANNEL', 'REACTION'] });
 client.commands = new Discord.Collection();
 const lastExecutedCommands = new Discord.Collection();
+let service = new Service(client);
 
 const cancelRaid = require('./commands/cancel raid.js');
 const commands = require('./commands/commands.js');
@@ -17,33 +19,35 @@ client.commands.set(displayRaids.name, displayRaids);
 client.commands.set(editRaid.name, editRaid);
 client.commands.set(registerRaid.name, registerRaid);
 
-var currentTitle = '';
-
+var currentTitle = 'MAKE DESTINY 2 RAIDING YOUR CORE SERVER CAPABILITY';
 client.on('ready', async () => {
     service.startTimer();
-    console.log('*** destiny raid bot ready ***');
+    utils.debug('Destiny raid bot ready');
+    client.user.setActivity(currentTitle);
 });
 
 client.on('error', err => {
-    console.log('*** error: ' + err.message + ' ***');
+    utils.debug('Error: ' + err.message);
 });
 
 client.on('disconnected', () => {
-    console.log('*** crashed, reconnecting ***');
+    utils.debug('Crashed, reconnecting');
 });
 
 client.on('messageReactionAdd', async (message, user) => {
     try {
-        registerRaid.reacted(message, user); //todo move react from register raid
+        let msg = await service.fetchMessageFromMessage(message);
+        registerRaid.reacted(message._emoji.name, msg, user);
     }
     catch (error) {
         console.error(error);
     }
 });
 
-client.on('messageReactionRemove', (message, user) => {
+client.on('messageReactionRemove', async (message, user) => {
     try {
-        registerRaid.unreacted(message, user); //todo move react from register raid
+        let msg = await service.fetchMessageFromMessage(message);
+        registerRaid.unreacted(message._emoji.name, msg, user);
     }
     catch (error) {
         console.error(error);
@@ -51,6 +55,7 @@ client.on('messageReactionRemove', (message, user) => {
 });
 
 client.on('message', message => {
+    //TODO: move to service
     if (!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();

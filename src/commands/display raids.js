@@ -1,5 +1,4 @@
 const utils = require('../utils.js');
-const { get } = require('lodash');
 
 const foreach = async (data, files, message, raid) => {
     let c = 0;
@@ -28,6 +27,21 @@ const foreach = async (data, files, message, raid) => {
         message.channel.send(data, { split: true });
     }
 }
+
+function execute(message, args) {
+    const data = [];
+    const files = utils.getAllFiles();
+
+    if (!args.length) {
+        data.push('Here\'s a list of all the active raid listings:');
+        foreach(data, files, message);
+    } else {
+        let r = utils.raids[args[0]] ? utils.raids[args[0]][0] : args[0];
+        data.push('Here\'s a list of all the active raids for: ' + r + ' :');
+        foreach(data, files, message, args[0]);
+    }
+}
+
 module.exports = {
     name: 'display',
     description: 'List all active raid listings for this channel.',
@@ -35,17 +49,5 @@ module.exports = {
     usage: '<optional arg1 raid>',
     guildOnly: true,
     cooldown: 1,
-    execute(message, args) {
-        const data = [];
-        const files = utils.getAllFiles();
-
-        if (!args.length) {
-            data.push('Here\'s a list of all the active raid listings:');
-            foreach(data, files, message);
-        } else {
-            let r = utils.raids[args[0]] ? utils.raids[args[0]][0] : args[0];
-            data.push('Here\'s a list of all the active raids for: ' + r + ' :');
-            foreach(data, files, message, args[0]);
-        }
-    }
+    execute
 };

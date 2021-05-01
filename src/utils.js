@@ -1,19 +1,19 @@
 const cloneDeep = require('lodash/fp/cloneDeep');
-const {raidTemplate} = require('./template.js');
-const path = require('path');
+const { raidTemplate } = require('./template.js');
 const raids = {
-    "vog" : ["Vault of Glass", "raid.jpg"],
-    "gos" : ["Garden of Salvation", "gos.png"],
+    "any": ["Undetermined or multiple raids", "raid.jpg"],
+    "vog": ["Vault of Glass", "raid.jpg"],
+    "gos": ["Garden of Salvation", "gos.png"],
     "sotp": ["Scourge of the Past", "sotp.png"],
-    "lw"  : ["Last Wish", "dream.png"],
+    "lw": ["Last Wish", "dream.png"],
     "levi": ["Leviathan", "levi.png"],
-    "cos" : ["Crown of Sorrow", "levi.png"],
-    "eow" : ["Eater of Worlds", "levi.png"],
-    "sos" : ["Spire of Stars", "levi.png"],
-    "dsc" : ["Deep Stone Crypt", "dsc.png"]
+    "cos": ["Crown of Sorrow", "levi.png"],
+    "eow": ["Eater of Worlds", "levi.png"],
+    "sos": ["Spire of Stars", "levi.png"],
+    "dsc": ["Deep Stone Crypt", "dsc.png"]
 };
-const teams = { "MEMBERS":0, "STANDINS":1, "UNAVAILABLE":2}
-const reacts = ['✅', '❓', '❎'];
+const teams = { "MEMBERS": 0, "STANDINS": 1 }
+const reacts = { 'w': '🇼', 't': '🇹', 'h': '🇭', 'f': '🇫', '?': '🔄' };
 
 module.exports = {
     raids: raids,
@@ -28,10 +28,11 @@ module.exports = {
         if (input.members) cloneEmbed.fields[0].value = input.members;
         if (input.standins) cloneEmbed.fields[1].value = input.standins;
         if (input.footer) cloneEmbed.footer.text = input.footer;
+        if (input.date) cloneEmbed.timestamp = input.date;
         return cloneEmbed;
     },
     debug(input) {
         var date = new Date(Date.now());
-        console.log(date.getHours()+':'+date.getMinutes() + ' :: ' + input);
+        console.log(date.getHours() + ':' + date.getMinutes() + ' :: ' + input);
     }
 };
