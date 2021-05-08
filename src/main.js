@@ -111,7 +111,7 @@ client.on('message', message => {
     }
     catch (error) {
         console.error(error);
-        message.reply('There was an error running ' + command.name);
+        message.reply(`${command.name} usage: ${command.usage}`);
     }
 });
 

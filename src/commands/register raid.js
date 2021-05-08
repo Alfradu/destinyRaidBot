@@ -9,18 +9,18 @@ function execute(message, args) {
     //      3+: info
     //TODO: parse args correctly, divide them by "-" 
     let raidAbbr = args[0].toLowerCase();
-    if (!utils.raids[raidAbbr]) return; //TODO change return
+    if (!utils.raids[raidAbbr]) throw new Exception();
 
     let timePart = args[1].split(/[@,:]+/g);
-    if (!timePart[0] || !timePart[1] || !timePart[2]) return; //TODO change return
+    if (!timePart[0] || !timePart[1] || !timePart[2])  throw new Exception();
     let date = new Date();
     const startDate = new Date(date.getFullYear(), date.getMonth(), timePart[0], timePart[1], timePart[2], 0, 0);
-    if (startDate < Date.now()) return; //TODO change return
+    if (startDate < Date.now())  throw new Exception();
 
     let optionalClass = args[2];
     let infoArgNr = 2;
     if (optionalClass.length == 1) {
-        if (!/^[T,W,H,F]$/i.test(optionalClass)) return; //TODO change return
+        if (!/^[T,W,H,F]$/i.test(optionalClass)) throw new Exception();
         infoArgNr = 3;
         optionalClass = optionalClass.toLowerCase();
     } else {
@@ -195,7 +195,7 @@ module.exports = {
     args: true,
     guildOnly: true,
     description: 'Create a listing for a raid.',
-    usage: '<arg1 raid name> <arg2 time dd@hh:mm> <optional arg3 class (W/T/H/F)> <optional arg4 additional info>',
+    usage: `<${Object.keys(utils.raids).join('/')}> <dd@hh:mm> <W/T/H/F> <info>`,
     cooldown: 1,
     execute,
     reacted,
